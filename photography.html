@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Photography — Nai Tzu Cheng</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #0a0a09;
+    --ink: #f4f1ea;
+    --ink-dim: #6e6e6a;
+    --accent: #c89f6b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    cursor: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+    z-index: 50;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.07;
+    z-index: 51;
+    mix-blend-mode: overlay;
+  }
+
+  #cursor {
+    position: fixed;
+    width: 50px; height: 50px;
+    border: 1px solid rgba(244,241,234,0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+                height 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    mix-blend-mode: difference;
+  }
+  #cursor.hover {
+    width: 90px; height: 90px;
+    border-color: var(--accent);
+  }
+  #cursor.hover::after {
+    content: 'TAKE';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--ink);
+  }
+
+  .ui-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    mix-blend-mode: difference;
+  }
+  .ui-overlay > * { pointer-events: auto; }
+
+  .top-left {
+    position: absolute;
+    top: 32px; left: 40px;
+  }
+  .top-left .back {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ink);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: opacity 0.3s;
+  }
+  .top-left .back:hover { opacity: 0.5; }
+
+  .top-right {
+    position: absolute;
+    top: 32px; right: 40px;
+    text-align: right;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    line-height: 1.8;
+  }
+  .top-right .label { color: var(--ink); }
+
+  .bottom-left {
+    position: absolute;
+    bottom: 32px; left: 40px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    line-height: 1.8;
+  }
+  .bottom-left .camera {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+    text-transform: none;
+    margin-bottom: 4px;
+  }
+
+  .bottom-right {
+    position: absolute;
+    bottom: 32px; right: 40px;
+    text-align: right;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .bottom-right .current {
+    font-family: 'Fraunces', serif;
+    font-size: 64px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .bottom-right .total {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--ink-dim);
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+
+  .hint {
+    position: absolute;
+    bottom: 110px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    opacity: 0;
+    animation: hintFade 5s 1.5s forwards ease;
+    pointer-events: none;
+    text-align: center;
+    z-index: 99;
+  }
+  @keyframes hintFade {
+    0% { opacity: 0; }
+    20%, 70% { opacity: 0.6; }
+    100% { opacity: 0; }
+  }
+
+  /* === 舞台:照片置中、3:2 比例 === */
+  .stage {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    perspective: 2000px;
+  }
+
+  .stack {
+    position: relative;
+    /* 3:2 比例,根據視窗自適應 */
+    width: min(82vw, calc(78vh * 1.5));
+    aspect-ratio: 3 / 2;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease-out;
+  }
+
+  .photo {
+    position: absolute;
+    inset: 0;
+    background: #1a1a18;
+    box-shadow:
+      0 30px 80px rgba(0,0,0,0.7),
+      0 12px 30px rgba(0,0,0,0.5),
+      inset 0 0 0 1px rgba(244,241,234,0.04);
+    transition: transform 0.9s cubic-bezier(0.23, 1, 0.32, 1),
+                opacity 0.9s cubic-bezier(0.23, 1, 0.32, 1),
+                filter 0.9s ease;
+    will-change: transform, opacity;
+    overflow: hidden;
+  }
+
+  .photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+
+<div class="ui-overlay">
+  <div class="top-left">
+    <a href="index.html" class="back">← BACK</a>
+  </div>
+  <div class="top-right">
+    <div class="label">CHAPTER 01</div>
+    <div>PHOTOGRAPHY</div>
+  </div>
+  <div class="bottom-left">
+    <div class="camera">Nikon FM2</div>
+    <div>FILM ARCHIVE</div>
+  </div>
+  <div class="bottom-right">
+    <div><span class="current" id="numCurrent">01</span></div>
+    <div class="total">/ <span id="numTotal">10</span></div>
+  </div>
+</div>
+
+<div class="hint">CLICK · SCROLL · PRESS ANY KEY</div>
+
+<div class="stage">
+  <div class="stack" id="stack"></div>
+</div>
+
+<script>
+// 59 張底片清單(精彩重曝光在前,輕微洗牌)
+const photos = [
+  './photos/51.jpg',
+  './photos/55.jpg',
+  './photos/52.jpg',
+  './photos/56.jpg',
+  './photos/53.jpg',
+  './photos/57.jpg',
+  './photos/58.jpg',
+  './photos/59.jpg',
+  './photos/03.jpg',
+  './photos/36.jpg',
+  './photos/50.jpg',
+  './photos/48.jpg',
+  './photos/14.jpg',
+  './photos/40.jpg',
+  './photos/13.jpg',
+  './photos/19.jpg',
+  './photos/23.jpg',
+  './photos/30.jpg',
+  './photos/17.jpg',
+  './photos/25.jpg',
+  './photos/21.jpg',
+  './photos/42.jpg',
+  './photos/33.jpg',
+  './photos/39.jpg',
+  './photos/16.jpg',
+  './photos/37.jpg',
+  './photos/28.jpg',
+  './photos/22.jpg',
+  './photos/32.jpg',
+  './photos/06.jpg',
+  './photos/11.jpg',
+  './photos/01.jpg',
+  './photos/10.jpg',
+  './photos/24.jpg',
+  './photos/09.jpg',
+  './photos/12.jpg',
+  './photos/41.jpg',
+  './photos/43.jpg',
+  './photos/45.jpg',
+  './photos/18.jpg',
+  './photos/20.jpg',
+  './photos/26.jpg',
+  './photos/29.jpg',
+  './photos/31.jpg',
+  './photos/27.jpg',
+  './photos/34.jpg',
+  './photos/04.jpg',
+  './photos/05.jpg',
+  './photos/07.jpg',
+  './photos/08.jpg',
+  './photos/15.jpg',
+  './photos/38.jpg',
+  './photos/44.jpg',
+  './photos/46.jpg',
+  './photos/47.jpg',
+  './photos/49.jpg',
+  './photos/35.jpg',
+  './photos/54.jpg',
+  './photos/02.jpg',
+];
+
+// 三段式洗牌 + 後段偷渡(讓後段照片也有機會被看到)
+function shuffleSection(arr, start, end) {
+  for (let i = end - 1; i > start; i--) {
+    const j = start + Math.floor(Math.random() * (i - start + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+shuffleSection(photos, 0, 8);    // 前 8 張(最強 ★★,在 1-8 內洗)
+shuffleSection(photos, 8, 31);   // 中段精選 各自先洗
+shuffleSection(photos, 31, 59);  // 後段平緩 各自先洗
+
+// === 後段偷渡:從後段(31~58)隨機抽 35% 與中段(8~30)互換 ===
+// 結果:訪客翻到第 9~31 張時,約 35% 機率會看到原後段照片
+//      原中段被擠出去的照片也會跑到後段,維持整體陣列長度
+(function smuggleBackToMiddle(){
+  const midStart = 8, midEnd = 31;       // 中段 23 張
+  const backStart = 31, backEnd = 59;    // 後段 28 張
+  const smuggleRate = 0.35;
+  const smuggleCount = Math.floor((backEnd - backStart) * smuggleRate);
+  // 後段抽 N 個 index
+  const backPool = [];
+  for(let i = backStart; i < backEnd; i++) backPool.push(i);
+  // Fisher-Yates 隨機抽 smuggleCount 個
+  for(let i = backPool.length - 1; i > backPool.length - 1 - smuggleCount; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [backPool[i], backPool[j]] = [backPool[j], backPool[i]];
+  }
+  const backChosen = backPool.slice(backPool.length - smuggleCount);
+  // 從中段隨機選同數量位置
+  const midPool = [];
+  for(let i = midStart; i < midEnd; i++) midPool.push(i);
+  for(let i = midPool.length - 1; i > midPool.length - 1 - smuggleCount; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [midPool[i], midPool[j]] = [midPool[j], midPool[i]];
+  }
+  const midChosen = midPool.slice(midPool.length - smuggleCount);
+  // 互換
+  for(let k = 0; k < smuggleCount; k++){
+    const a = backChosen[k];
+    const b = midChosen[k];
+    [photos[a], photos[b]] = [photos[b], photos[a]];
+  }
+  // 互換後中段再洗一次,讓被偷渡進來的後段照片隨機分布
+  shuffleSection(photos, midStart, midEnd);
+})();
+
+const STACK_VISIBLE = 4;
+const stack = document.getElementById('stack');
+const cursor = document.getElementById('cursor');
+const numCurrent = document.getElementById('numCurrent');
+const numTotal = document.getElementById('numTotal');
+
+let currentIndex = 0;
+let isAnimating = false;
+let mouseX = 0, mouseY = 0;
+let targetMouseX = 0, targetMouseY = 0;
+let cursorPxX = 0, cursorPxY = 0;
+
+numTotal.textContent = String(photos.length).padStart(2, '0');
+
+const photoElements = [];
+photos.forEach((src, idx) => {
+  const photo = document.createElement('div');
+  photo.className = 'photo';
+  photo.innerHTML = '<img src="' + src + '" alt="Frame ' + (idx + 1) + '" loading="' + (idx < 3 ? 'eager' : 'lazy') + '">';
+  stack.appendChild(photo);
+  photoElements.push(photo);
+});
+
+// === 整齊置中堆疊 — 撲克牌風格 ===
+function updateStack() {
+  numCurrent.textContent = String(currentIndex + 1).padStart(2, '0');
+
+  photoElements.forEach((el, idx) => {
+    const offset = idx - currentIndex;
+
+    if (offset < 0) {
+      // 已被拿走的:藏在左上
+      el.style.transform = 'translate(-70vw, -55vh) rotate(-15deg)';
+      el.style.opacity = '0';
+      el.style.zIndex = '0';
+      el.style.pointerEvents = 'none';
+      return;
+    }
+
+    if (offset >= STACK_VISIBLE) {
+      // 後面太遠的:藏起來
+      el.style.transform = 'translate(0, 0) scale(0.92)';
+      el.style.opacity = '0';
+      el.style.zIndex = '1';
+      el.style.pointerEvents = 'none';
+      return;
+    }
+
+    // 可見堆疊裡:整齊置中,只有微小的縮小 + 往後推
+    const depth = offset;
+    const scale = 1 - (depth * 0.02);          // 每張縮 2%
+    const yPush = depth * 6;                    // 每張往下推 6px(露出邊緣)
+    const opacity = 1 - (depth * 0.15);         // 後面變淡
+    const brightness = 1 - (depth * 0.18);      // 後面變暗
+
+    el.style.transform =
+      'translate(0, ' + yPush + 'px) scale(' + scale + ')';
+    el.style.opacity = String(opacity);
+    el.style.zIndex = String(50 - offset);
+    el.style.pointerEvents = offset === 0 ? 'auto' : 'none';
+    el.style.filter = 'brightness(' + brightness + ')';
+  });
+}
+
+updateStack();
+
+// === 拿起動作:往左上飛 ===
+function nextPhoto() {
+  if (isAnimating) return;
+  if (currentIndex >= photos.length - 1) {
+    // 循環回到第一張
+    isAnimating = true;
+    photoElements.forEach(el => {
+      el.style.transition = 'none';
+    });
+    setTimeout(() => {
+      currentIndex = 0;
+      photoElements.forEach(el => {
+        el.style.transition = '';
+      });
+      updateStack();
+      setTimeout(() => isAnimating = false, 100);
+    }, 50);
+    return;
+  }
+
+  isAnimating = true;
+  const top = photoElements[currentIndex];
+
+  // 最上面那張 — 往左上方飛 + 旋轉 + 淡出
+  top.style.transform = 'translate(-70vw, -55vh) rotate(-15deg)';
+  top.style.opacity = '0';
+  top.style.filter = 'brightness(0.5)';
+
+  setTimeout(() => {
+    currentIndex++;
+    updateStack();
+    setTimeout(() => isAnimating = false, 600);
+  }, 200);
+}
+
+function prevPhoto() {
+  if (isAnimating || currentIndex === 0) return;
+  currentIndex--;
+  updateStack();
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.ui-overlay a')) return;
+  nextPhoto();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    prevPhoto();
+    return;
+  }
+  nextPhoto();
+});
+
+let wheelLock = false;
+document.addEventListener('wheel', (e) => {
+  if (wheelLock) return;
+  wheelLock = true;
+  setTimeout(() => wheelLock = false, 700);
+  if (e.deltaY > 0 || e.deltaX > 0) {
+    nextPhoto();
+  } else {
+    prevPhoto();
+  }
+}, { passive: true });
+
+document.addEventListener('mousemove', (e) => {
+  cursorPxX = e.clientX;
+  cursorPxY = e.clientY;
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+  targetMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+  targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+const checkHover = () => {
+  const topPhoto = photoElements[currentIndex];
+  if (!topPhoto) return;
+  const rect = topPhoto.getBoundingClientRect();
+  const inside = cursorPxX >= rect.left && cursorPxX <= rect.right &&
+                 cursorPxY >= rect.top && cursorPxY <= rect.bottom;
+  cursor.classList.toggle('hover', inside);
+};
+
+// 浮動視差 — 整疊輕微跟隨,但保持置中
+function animateFloat() {
+  mouseX += (targetMouseX - mouseX) * 0.06;
+  mouseY += (targetMouseY - mouseY) * 0.06;
+
+  // 弱化視差幅度,讓堆疊感覺更穩定
+  const tx = mouseX * 18;
+  const ty = mouseY * 12;
+  const rx = mouseY * -1.5;
+  const ry = mouseX * 2.2;
+  stack.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
+
+  checkHover();
+  requestAnimationFrame(animateFloat);
+}
+animateFloat();
+
+let touchStartX = 0;
+document.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+document.addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (dx < -30) nextPhoto();
+  else if (dx > 30) prevPhoto();
+  else nextPhoto();
+}, { passive: true });
+
+if (window.matchMedia('(max-width: 768px)').matches) {
+  cursor.style.display = 'none';
+  document.body.style.cursor = 'auto';
+}
+</script>
+
+</body>
+</html>

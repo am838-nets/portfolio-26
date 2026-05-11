@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Design — 鄭乃慈 Nai Tzu Cheng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@200;300;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{
+    width:100%;height:100%;overflow:hidden;
+    background:#000;color:#fff;
+    font-family:'Inter','Noto Sans TC',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #scene{position:fixed;inset:0;z-index:1;display:block;}
+
+  .corner-tl{position:fixed;top:56px;left:60px;z-index:20;line-height:1.35;}
+  .corner-tl a{text-decoration:none;color:inherit;display:block;}
+  .corner-tl .name-zh{font-size:16px;font-weight:500;letter-spacing:0.12em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,0.6);}
+  .corner-tl .name-en{font-family:'JetBrains Mono',monospace;font-size:9px;color:#ddd;letter-spacing:0.28em;margin-top:5px;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
+
+  /* 中央 Coming Soon */
+  .center-text{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    z-index:18;text-align:center;pointer-events:none;
+  }
+  .center-text .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:0.45em;
+    color:#fff;text-transform:uppercase;
+    margin-bottom:24px;
+    text-shadow:
+      0 0 1px rgba(255,255,255,0.95),
+      0 0 3px rgba(255,255,255,0.85),
+      0 0 8px rgba(220,240,255,0.55),
+      0 0 16px rgba(180,220,255,0.35),
+      0 0 26px rgba(150,210,255,0.20);
+    animation: neonBreath 3.6s ease-in-out infinite;
+  }
+  .center-text .title{
+    font-family:'Inter','Noto Sans TC',sans-serif;
+    font-size:64px;font-weight:200;letter-spacing:0.08em;
+    color:#fff;text-transform:uppercase;
+    text-shadow:0 2px 20px rgba(0,0,0,0.5);
+    line-height:1;
+  }
+  .center-text .subtitle{
+    margin-top:20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:0.32em;
+    color:#bbb;text-transform:uppercase;
+    text-shadow:0 1px 4px rgba(0,0,0,0.6);
+  }
+  @keyframes neonBreath {
+    0%, 100% { filter: brightness(1); }
+    50%      { filter: brightness(1.12); }
+  }
+
+  /* 返回首頁 */
+  .back-link{
+    position:fixed;top:56px;right:60px;z-index:20;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
+    color:#ddd;text-decoration:none;
+    text-shadow:
+      0 0 2px rgba(255,255,255,0.5),
+      0 0 8px rgba(220,240,255,0.3),
+      0 1px 4px rgba(0,0,0,0.6);
+    transition:color 0.3s ease, text-shadow 0.4s ease;
+  }
+  .back-link:hover{
+    color:#fff;
+    text-shadow:
+      0 0 2px rgba(255,255,255,1),
+      0 0 10px rgba(255,250,235,0.6),
+      0 0 20px rgba(255,240,210,0.35);
+  }
+  .back-link::before{ content:'← '; }
+
+  .corner-br{
+    position:fixed;bottom:56px;right:60px;z-index:20;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;letter-spacing:0.22em;color:#bbb;text-transform:uppercase;
+    text-shadow:0 1px 4px rgba(0,0,0,0.6);
+  }
+
+  @media (max-width:768px){
+    .corner-tl{top:32px;left:32px;}
+    .back-link{top:32px;right:32px;}
+    .corner-br{bottom:32px;right:32px;}
+    .center-text .title{font-size:42px;}
+    .center-text .label{font-size:10px;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<a class="corner-tl" href="index.html">
+  <div class="name-zh">鄭乃慈</div>
+  <div class="name-en">Nai Tzu Cheng</div>
+</a>
+
+<a class="back-link" href="index.html">Home</a>
+
+<div class="center-text">
+  <div class="label">Design</div>
+  <div class="title">Coming Soon</div>
+  <div class="subtitle">In progress · 2026</div>
+</div>
+
+<div class="corner-br">Portfolio 2026</div>
+
+<script>
+/* 簡化版水池:只有環境流動、沒有滑鼠互動、漣漪用一個自動的中央輕拍 */
+const cv = document.getElementById('scene');
+const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false });
+if(!gl){ document.body.style.background = '#0a1820'; throw new Error('No WebGL'); }
+
+let W=0, H=0;
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+function fit(){
+  W = window.innerWidth; H = window.innerHeight;
+  cv.style.width = W+'px'; cv.style.height = H+'px';
+  cv.width = Math.floor(W*dpr); cv.height = Math.floor(H*dpr);
+  gl.viewport(0, 0, cv.width, cv.height);
+}
+fit();
+window.addEventListener('resize', fit);
+
+const VERT = `attribute vec2 a_pos;varying vec2 v_uv;void main(){v_uv=a_pos*0.5+0.5;gl_Position=vec4(a_pos,0.0,1.0);}`;
+
+const FRAG = `
+precision highp float;
+varying vec2 v_uv;
+uniform float u_time;
+uniform vec2 u_res;
+
+float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float noise(vec2 p){
+  vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+  float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
+}
+float fbm(vec2 p){float v=0.0,a=0.5;for(int i=0;i<5;i++){v+=a*noise(p);p*=2.02;a*=0.5;}return v;}
+float fbmStretch(vec2 p){p.y*=0.18;float v=0.0,a=0.5;for(int i=0;i<4;i++){v+=a*noise(p);p*=2.1;a*=0.5;}return v;}
+
+vec3 pondFloor(vec2 uv,float time){
+  vec2 flow1=vec2(time*0.005,time*0.008);
+  vec2 flow2=vec2(-time*0.004,time*0.003);
+  vec3 deepWater=vec3(0.025,0.10,0.11);
+  vec3 shallowWater=vec3(0.10,0.36,0.30);
+  float depth=fbm(uv*2.5+flow1);
+  vec3 baseColor=mix(deepWater,shallowWater,smoothstep(0.3,0.7,depth));
+  vec2 grassUV=uv*vec2(8.0,14.0)+vec2(time*0.01,0.0);
+  float grass=fbmStretch(grassUV);
+  float grassMask=smoothstep(0.45,0.65,fbm(uv*1.8+flow2));
+  grass=smoothstep(0.35,0.7,grass);
+  vec3 grassColor=vec3(0.10,0.42,0.18);
+  vec3 grassTip=vec3(0.45,0.78,0.22);
+  float tipMask=smoothstep(0.55,0.8,noise(grassUV*1.5+flow1*2.0));
+  vec3 grassFinal=mix(grassColor,grassTip,tipMask*0.7);
+  baseColor=mix(baseColor,grassFinal,grass*grassMask*0.85);
+  float stoneNoise=fbm(uv*3.5+vec2(7.0,13.0));
+  float stoneMask=smoothstep(0.62,0.7,stoneNoise)*(1.0-grassMask*0.7);
+  baseColor=mix(baseColor,vec3(0.18,0.20,0.18),stoneMask*0.45);
+  return baseColor;
+}
+
+float caustics(vec2 uv,float time){
+  vec2 p1=uv*6.0+vec2(time*0.06,time*0.04);
+  vec2 p2=uv*7.0+vec2(-time*0.05,time*0.07);
+  float c=pow(1.0-abs(noise(p1)-0.5)*2.0,4.0);
+  c+=pow(1.0-abs(noise(p2)-0.5)*2.0,4.0);
+  return c*0.5;
+}
+
+void main(){
+  vec2 uv=v_uv;
+  float aspect=u_res.x/u_res.y;
+  vec2 uvAspect=vec2(uv.x*aspect,uv.y);
+
+  /* 自動中央漣漪:每 8 秒一次,從中心擴出 */
+  float cyclePeriod=8.0;
+  float cycleT=mod(u_time,cyclePeriod);
+  vec2 center=vec2(0.5*aspect,0.5);
+  float dist=length(uvAspect-center);
+  float speed=0.08;
+  float front=cycleT*speed;
+  float offset=dist-front;
+  float packetWidth=0.18+cycleT*0.012;
+  float rippleH=0.0;
+  vec2 dH=vec2(0);
+  if(abs(offset)<packetWidth){
+    float env=exp(-pow(offset/packetWidth,2.0)*1.4);
+    float carrier=sin(-offset/0.040*6.2831);
+    float ageAtt=exp(-cycleT*0.18);
+    rippleH=0.7*env*carrier*ageAtt;
+    float gradMag=0.7*env*cos(-offset/0.040*6.2831)*(6.2831/0.040)*ageAtt;
+    if(dist>0.0001){vec2 d2=(uvAspect-center)/dist;dH+=gradMag*d2;}
+  }
+
+  /* 基礎水流 */
+  vec2 flow1=vec2(u_time*0.04,u_time*0.025);
+  vec2 flow2=vec2(-u_time*0.03,u_time*0.05);
+  float baseFlow=fbm(uvAspect*4.0+flow1)-0.5;
+  baseFlow+=(fbm(uvAspect*6.0+flow2)-0.5)*0.5;
+  baseFlow*=0.04;
+  rippleH+=baseFlow;
+  float eps=0.004;
+  float bfx=fbm((uvAspect+vec2(eps,0))*4.0+flow1)-fbm((uvAspect-vec2(eps,0))*4.0+flow1);
+  float bfy=fbm((uvAspect+vec2(0,eps))*4.0+flow1)-fbm((uvAspect-vec2(0,eps))*4.0+flow1);
+  dH+=vec2(bfx,bfy)*0.5;
+
+  vec2 distortedUV=uvAspect+dH*0.018;
+  vec3 floorColor=pondFloor(distortedUV,u_time);
+  float caus=caustics(distortedUV*0.8,u_time);
+  caus=caus*(1.0+max(0.0,rippleH)*6.0*0.5);
+  floorColor+=vec3(1.0,0.95,0.75)*caus*0.18;
+  float surfaceShine=max(0.0,rippleH)*8.0;
+  surfaceShine=pow(min(1.0,surfaceShine),1.5);
+  floorColor+=vec3(1.0,0.98,0.92)*surfaceShine*0.35;
+  floorColor*=(1.0-max(0.0,-rippleH)*6.0*0.3);
+
+  float distToCenter=length(uvAspect-center);
+  float coreLight=pow(1.0-smoothstep(0.0,0.30,distToCenter),1.5);
+  float midLight=1.0-smoothstep(0.18,0.55,distToCenter);
+  floorColor*=0.15+midLight*0.55+coreLight*0.55;
+  floorColor*=1.0-smoothstep(0.5,0.95,distToCenter)*0.5;
+  floorColor+=vec3(1.0,0.96,0.85)*coreLight*0.12;
+
+  gl_FragColor=vec4(floorColor,1.0);
+}
+`;
+
+function compile(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(sh));throw new Error;}return sh;}
+const vs=compile(gl.VERTEX_SHADER,VERT);
+const fs=compile(gl.FRAGMENT_SHADER,FRAG);
+const prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);gl.useProgram(prog);
+const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+const aPos=gl.getAttribLocation(prog,'a_pos');gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
+const uTime=gl.getUniformLocation(prog,'u_time');
+const uRes=gl.getUniformLocation(prog,'u_res');
+const t0=performance.now();
+function frame(){
+  const t=(performance.now()-t0)/1000;
+  gl.uniform1f(uTime,t);
+  gl.uniform2f(uRes,cv.width,cv.height);
+  gl.drawArrays(gl.TRIANGLES,0,6);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

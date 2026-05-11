@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>鄭乃慈 Nai Tzu Cheng — Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@300;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{
+    width:100%;height:100%;overflow:hidden;
+    background:#000;color:#fff;
+    font-family:'Inter','Noto Sans TC',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    cursor:crosshair;
+  }
+  #scene{position:fixed;inset:0;z-index:1;display:block;}
+
+  .corner-tl{position:fixed;top:56px;left:60px;z-index:20;line-height:1.35;}
+  .corner-tl .name-zh{font-size:16px;font-weight:500;letter-spacing:0.12em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,0.6);}
+  .corner-tl .name-en{font-family:'JetBrains Mono',monospace;font-size:9px;color:#ddd;letter-spacing:0.28em;margin-top:5px;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
+
+  .corner-tr{position:fixed;top:56px;right:60px;z-index:20;text-align:right;line-height:1.6;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.22em;color:#ddd;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
+  .corner-tr .live{display:inline-flex;align-items:center;gap:9px;color:#fff;}
+  .corner-tr .live::before{content:'';width:6px;height:6px;background:#4ADE80;border-radius:50%;box-shadow:0 0 10px #4ADE80,0 0 20px rgba(74,222,128,0.4);animation:pulse 2.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.55;transform:scale(1.3);}}
+  .corner-tr .meta{color:#bbb;margin-top:7px;font-size:9px;letter-spacing:0.28em;}
+
+  /* 左下:聯絡方式(對調) */
+  .corner-bl{position:fixed;bottom:56px;left:60px;z-index:20;text-align:left;line-height:1.8;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.18em;}
+  .corner-bl a{color:#ddd;text-decoration:none;display:block;transition:color 0.3s ease;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
+  .corner-bl a:hover{color:#fff;}
+
+  /* 右下:時鐘 + 太陽月亮(對調) */
+  .corner-br{position:fixed;bottom:56px;right:60px;z-index:20;display:flex;align-items:center;gap:14px;flex-direction:row-reverse;}
+  .corner-br .icons{display:flex;align-items:center;gap:8px;}
+  .corner-br .icon-wrap{width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  .corner-br .icon-wrap svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.5));}
+  .corner-br .clock-text{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#ddd;line-height:1;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
+
+  /* 底部 nav:霓虹燈自體發光 */
+  .nav-categories{
+    position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:18;
+    display:flex;gap:64px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;letter-spacing:0.34em;text-transform:uppercase;
+  }
+  @keyframes neonBreath {
+    0%, 100% { filter: brightness(1); }
+    50%      { filter: brightness(1.12); }
+  }
+  .nav-categories a{
+    color:#ffffff;text-decoration:none;cursor:pointer;
+    padding:4px 2px;position:relative;
+    transition:color 0.3s ease, text-shadow 0.4s ease, filter 0.4s ease;
+    /* === 霓虹燈光暈:5 層由內到外 === */
+    /* 1. 緊貼字體的亮核(讓字本身像發光體) */
+    /* 2-3. 中層白光暈(密集) */
+    /* 4-5. 外層冷青白光暈(發光感的關鍵 — 純白看起來像反光,加一點冷色才像霓虹燈管) */
+    text-shadow:
+      0 0 1px rgba(255,255,255,0.95),
+      0 0 3px rgba(255,255,255,0.85),
+      0 0 8px rgba(220,240,255,0.55),
+      0 0 16px rgba(180,220,255,0.35),
+      0 0 26px rgba(150,210,255,0.20);
+    /* 微微呼吸,像真實霓虹燈管的脈動 */
+    animation: neonBreath 3.6s ease-in-out infinite;
+  }
+  /* 三個 link 各自微微錯開呼吸時序,避免同步看起來機械 */
+  .nav-categories a:nth-child(2){ animation-delay: 1.2s; }
+  .nav-categories a:nth-child(3){ animation-delay: 2.4s; }
+
+  .nav-categories a::after{
+    content:'';position:absolute;left:50%;bottom:-3px;
+    width:0;height:1px;background:#fff;
+    transition:width 0.4s ease, left 0.4s ease, box-shadow 0.4s ease;
+  }
+  .nav-categories a:hover{
+    color:#fff;
+    /* hover 時光暈更亮、更暖,且範圍擴大,做出「靠近發光體」感 */
+    text-shadow:
+      0 0 1px rgba(255,255,255,1),
+      0 0 4px rgba(255,255,255,1),
+      0 0 12px rgba(255,250,235,0.75),
+      0 0 24px rgba(255,240,210,0.45),
+      0 0 40px rgba(255,230,180,0.28);
+    filter: brightness(1.18);
+  }
+  .nav-categories a:hover::after{
+    width:100%;left:0;
+    box-shadow:0 0 8px rgba(255,255,255,0.9), 0 0 14px rgba(255,240,210,0.5);
+  }
+
+  @media (max-width:768px){
+    .corner-tl{top:32px;left:32px;}
+    .corner-tr{top:32px;right:32px;}
+    .corner-bl{bottom:48px;left:32px;}
+    .corner-br{bottom:48px;right:32px;}
+    .nav-categories{gap:30px;bottom:54px;}
+    .nav-categories a{font-size:9px;letter-spacing:0.28em;}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div class="corner-tl">
+  <div class="name-zh">鄭乃慈</div>
+  <div class="name-en">Nai Tzu Cheng</div>
+</div>
+
+<div class="corner-tr">
+  <div class="live">Taipei · Available</div>
+  <div class="meta">Portfolio 2026</div>
+</div>
+
+<div class="corner-bl">
+  <a href="mailto:chn99299@gmail.com">chn99299@gmail.com</a>
+  <a href="tel:+886909768719">+886 909 768 719</a>
+</div>
+
+<div class="corner-br">
+  <div class="icons">
+    <div class="icon-wrap" id="sunIcon"></div>
+    <div class="icon-wrap" id="moonIcon"></div>
+  </div>
+  <div class="clock-text" id="clockText">--:--</div>
+</div>
+
+<nav class="nav-categories" id="nav">
+  <a href="photography.html">Photography</a>
+  <a href="design.html">Design</a>
+  <a href="creation.html">Creation</a>
+</nav>
+
+<script>
+/* ============================================================
+   POOL OF LIGHT — v18
+   新增:
+   1. 拖水尾跡 (wake) — 沿速度方向被拉長的橢圓擾動
+   2. 停止漣漪 — 從動到停的瞬間發一次
+   3. 二次漣漪 — 拖水時偶爾發出的小漣漪
+   ============================================================ */
+
+const cv = document.getElementById('scene');
+const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false });
+if(!gl){ alert('WebGL not supported'); throw new Error('No WebGL'); }
+
+let W = 0, H = 0;
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+function fit(){
+  W = window.innerWidth; H = window.innerHeight;
+  cv.style.width = W + 'px';
+  cv.style.height = H + 'px';
+  cv.width = Math.floor(W * dpr);
+  cv.height = Math.floor(H * dpr);
+  gl.viewport(0, 0, cv.width, cv.height);
+}
+fit();
+window.addEventListener('resize', fit);
+
+const VERT = `
+attribute vec2 a_pos;
+varying vec2 v_uv;
+void main(){
+  v_uv = a_pos * 0.5 + 0.5;
+  gl_Position = vec4(a_pos, 0.0, 1.0);
+}
+`;
+
+const FRAG = `
+precision highp float;
+
+varying vec2 v_uv;
+uniform float u_time;
+uniform vec2 u_res;
+uniform vec2 u_mouse;
+uniform float u_dayProgress;
+
+#define MAX_RIPPLES 30
+#define MAX_WAKES 40
+uniform int u_rippleCount;
+uniform vec4 u_ripples[MAX_RIPPLES];
+
+uniform int u_wakeCount;
+// 每個 wake 占 2 個 vec4:
+//   wakeA: xy=position, z=age, w=strength
+//   wakeB: xy=direction(unit), z=length, w=width
+uniform vec4 u_wakesA[MAX_WAKES];
+uniform vec4 u_wakesB[MAX_WAKES];
+
+float hash(vec2 p){
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float noise(vec2 p){
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+float fbm(vec2 p){
+  float v = 0.0;
+  float a = 0.5;
+  for(int i = 0; i < 5; i++){
+    v += a * noise(p);
+    p *= 2.02;
+    a *= 0.5;
+  }
+  return v;
+}
+
+float fbmStretch(vec2 p){
+  p.y *= 0.18;
+  float v = 0.0;
+  float a = 0.5;
+  for(int i = 0; i < 4; i++){
+    v += a * noise(p);
+    p *= 2.1;
+    a *= 0.5;
+  }
+  return v;
+}
+
+/* ============================================================
+   ===== Wake field 拖水尾跡 ===================================
+   每個 wake 粒子是「沿方向拉長的高斯橢圓」
+   貢獻到 height field,造成局部水面被「壓下/拉起」
+   會自然產生折射,扭曲下方池底
+=============================================================*/
+vec3 wakeField(vec2 px){
+  float h = 0.0;
+  float dx = 0.0;
+  float dy = 0.0;
+  float aspect = u_res.x / u_res.y;
+
+  for(int i = 0; i < MAX_WAKES; i++){
+    if(i >= u_wakeCount) break;
+    vec4 a = u_wakesA[i];
+    vec4 b = u_wakesB[i];
+
+    vec2 wp = a.xy;
+    float age = a.z;
+    float str = a.w;
+    vec2 dir = b.xy;
+    float len = b.z;
+    float wid = b.w;
+
+    if(age < 0.0 || age > 2.5) continue;
+
+    vec2 d = px - wp;
+    d.x *= aspect;
+
+    // 投影到 wake 的局部座標(沿 dir = x 軸,垂直 dir = y 軸)
+    vec2 perp = vec2(-dir.y, dir.x);
+    vec2 localD = vec2(dot(d, dir), dot(d, perp));
+
+    // 各向異性高斯
+    float gx = localD.x / len;
+    float gy = localD.y / wid;
+    float gauss = exp(-(gx*gx + gy*gy) * 1.5);
+
+    if(gauss < 0.005) continue;
+
+    // 生命週期:0~15% 上升,15~100% 平滑衰減 (2.2 秒)
+    float lifeRatio = age / 2.2;
+    float lifeAtt;
+    if(lifeRatio < 0.12){
+      lifeAtt = lifeRatio / 0.12;
+    } else {
+      lifeAtt = 1.0 - smoothstep(0.12, 1.0, lifeRatio);
+    }
+
+    // wake 在「前方」(dir 方向)會稍微壓低水面、後方稍微抬高
+    // 這樣有「推開水」的感覺
+    // 用 sin(localD.x / len * pi) 做出前低後高
+    float pushPull = sin(localD.x / len * 3.1416 * 0.5);
+
+    float amp = str * gauss * lifeAtt * 0.7 * pushPull;
+    h += amp;
+
+    // 梯度貢獻(對折射)
+    // 簡化:用方向向量乘以梯度估算
+    float gradMag = -2.0 * 1.5 * gauss * str * lifeAtt * 0.7 * pushPull;
+    // 對 x: gradMag * (gx / len), 對 y: gradMag * (gy / wid)
+    // 但要轉回世界座標(從局部 x/y 還原)
+    float gradLocalX = gradMag * gx / len;
+    float gradLocalY = gradMag * gy / wid;
+    // 再加上 pushPull 自身的梯度(只對 localD.x)
+    float pushPullGrad = cos(localD.x / len * 3.1416 * 0.5) * (3.1416 * 0.5 / len) * str * gauss * lifeAtt * 0.7;
+    gradLocalX += pushPullGrad;
+    // 從局部還原到世界(dir 跟 perp 的旋轉)
+    vec2 worldGrad = dir * gradLocalX + perp * gradLocalY;
+    dx += worldGrad.x;
+    dy += worldGrad.y;
+  }
+
+  return vec3(h, dx, dy);
+}
+
+/* ===== 漣漪計算(同 v17,間距加倍、傳到邊界)===== */
+vec3 rippleField(vec2 px){
+  float h = 0.0;
+  float dx = 0.0;
+  float dy = 0.0;
+  float aspect = u_res.x / u_res.y;
+
+  for(int i = 0; i < MAX_RIPPLES; i++){
+    if(i >= u_rippleCount) break;
+    vec4 r = u_ripples[i];
+    vec2 rp = r.xy;
+    float age = r.z;
+    float str = r.w;
+
+    if(age < 0.0) continue;
+
+    vec2 d = (px - rp);
+    d.x *= aspect;
+    float dist = length(d);
+
+    float speed = 0.08;
+    float front = age * speed;
+    float offset = dist - front;
+
+    float packetWidth = 0.18 + age * 0.012;
+    if(abs(offset) > packetWidth) continue;
+
+    float env = exp(-pow(offset / packetWidth, 2.0) * 1.4);
+    float wavelength = 0.040;
+    float carrier = sin(-offset / wavelength * 6.2831);
+    float ageAtt = exp(-age * 0.18);
+
+    float amp = str * env * carrier * ageAtt;
+    h += amp;
+
+    float gradMag = str * env * cos(-offset / wavelength * 6.2831) * (6.2831 / wavelength) * ageAtt;
+    if(dist > 0.0001){
+      vec2 dir = d / dist;
+      dx += gradMag * dir.x;
+      dy += gradMag * dir.y;
+    }
+  }
+
+  return vec3(h, dx, dy);
+}
+
+vec3 pondFloor(vec2 uv, float time){
+  vec2 flow1 = vec2(time * 0.005, time * 0.008);
+  vec2 flow2 = vec2(-time * 0.004, time * 0.003);
+  vec3 deepWater = vec3(0.025, 0.10, 0.11);
+  vec3 shallowWater = vec3(0.10, 0.36, 0.30);
+  float depth = fbm(uv * 2.5 + flow1);
+  vec3 baseColor = mix(deepWater, shallowWater, smoothstep(0.3, 0.7, depth));
+
+  vec2 grassUV = uv * vec2(8.0, 14.0) + vec2(time * 0.01, 0.0);
+  float grass = fbmStretch(grassUV);
+  float grassMask = smoothstep(0.45, 0.65, fbm(uv * 1.8 + flow2));
+  grass = smoothstep(0.35, 0.7, grass);
+  vec3 grassColor = vec3(0.10, 0.42, 0.18);
+  vec3 grassTip = vec3(0.45, 0.78, 0.22);
+  float tipMask = smoothstep(0.55, 0.8, noise(grassUV * 1.5 + flow1 * 2.0));
+  vec3 grassFinal = mix(grassColor, grassTip, tipMask * 0.7);
+  baseColor = mix(baseColor, grassFinal, grass * grassMask * 0.85);
+
+  float stoneNoise = fbm(uv * 3.5 + vec2(7.0, 13.0));
+  float stoneMask = smoothstep(0.62, 0.7, stoneNoise) * (1.0 - grassMask * 0.7);
+  vec3 stoneColor = vec3(0.18, 0.20, 0.18);
+  baseColor = mix(baseColor, stoneColor, stoneMask * 0.45);
+
+  return baseColor;
+}
+
+float caustics(vec2 uv, float time){
+  vec2 p1 = uv * 6.0 + vec2(time * 0.06, time * 0.04);
+  vec2 p2 = uv * 7.0 + vec2(-time * 0.05, time * 0.07);
+  float n1 = noise(p1);
+  float n2 = noise(p2);
+  float c = pow(1.0 - abs(n1 - 0.5) * 2.0, 4.0);
+  c += pow(1.0 - abs(n2 - 0.5) * 2.0, 4.0);
+  c *= 0.5;
+  return c;
+}
+
+void main(){
+  vec2 uv = v_uv;
+  float aspect = u_res.x / u_res.y;
+  vec2 uvAspect = vec2(uv.x * aspect, uv.y);
+
+  // === 1. 漣漪高度場 ===
+  vec3 ripple = rippleField(uv);
+  // === 2. wake 高度場 ===
+  vec3 wake = wakeField(uv);
+
+  float height = ripple.x + wake.x;
+  vec2 dH = ripple.yz + wake.yz;
+
+  // === 3. 基礎水流(永不停)===
+  vec2 flow1 = vec2(u_time * 0.04, u_time * 0.025);
+  vec2 flow2 = vec2(-u_time * 0.03, u_time * 0.05);
+  float baseFlow = fbm(uvAspect * 4.0 + flow1) - 0.5;
+  baseFlow += (fbm(uvAspect * 6.0 + flow2) - 0.5) * 0.5;
+  baseFlow *= 0.04;
+  height += baseFlow;
+
+  float eps = 0.004;
+  float bfx1 = fbm((uvAspect + vec2(eps, 0.0)) * 4.0 + flow1) - fbm((uvAspect - vec2(eps, 0.0)) * 4.0 + flow1);
+  float bfy1 = fbm((uvAspect + vec2(0.0, eps)) * 4.0 + flow1) - fbm((uvAspect - vec2(0.0, eps)) * 4.0 + flow1);
+  dH += vec2(bfx1, bfy1) * 0.5;
+
+  // === 4. 折射 ===
+  float refractionStrength = 0.018;
+  vec2 distortedUV = uvAspect + dH * refractionStrength;
+
+  vec3 floorColor = pondFloor(distortedUV, u_time);
+
+  float caus = caustics(distortedUV * 0.8, u_time);
+  float rippleHighlight = max(0.0, height) * 6.0;
+  caus = caus * (1.0 + rippleHighlight * 0.5);
+  vec3 causticColor = vec3(1.0, 0.95, 0.75);
+  floorColor += causticColor * caus * 0.18;
+
+  float surfaceShine = max(0.0, height) * 8.0;
+  surfaceShine = pow(min(1.0, surfaceShine), 1.5);
+  floorColor += vec3(1.0, 0.98, 0.92) * surfaceShine * 0.35;
+
+  float surfaceDark = max(0.0, -height) * 6.0;
+  floorColor *= (1.0 - surfaceDark * 0.3);
+
+  // === 中央亮 → 邊緣暗 ===
+  vec2 center = vec2(0.5 * aspect, 0.5);
+  float distToCenter = length(uvAspect - center);
+  float coreLight = 1.0 - smoothstep(0.0, 0.30, distToCenter);
+  coreLight = pow(coreLight, 1.5);
+  float midLight = 1.0 - smoothstep(0.18, 0.55, distToCenter);
+  float radialBrightness = 0.15 + midLight * 0.55 + coreLight * 0.55;
+  floorColor *= radialBrightness;
+  float vignetteEdge = smoothstep(0.5, 0.95, distToCenter);
+  floorColor *= 1.0 - vignetteEdge * 0.5;
+  vec3 sunGlow = vec3(1.0, 0.96, 0.85);
+  floorColor += sunGlow * coreLight * 0.12;
+
+  // === 日夜 ===
+  vec3 nightColor = vec3(0.01, 0.015, 0.025);
+  floorColor = mix(nightColor + floorColor * 0.15, floorColor, u_dayProgress);
+
+  gl_FragColor = vec4(floorColor, 1.0);
+}
+`;
+
+function compile(type, src){
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
+    console.error(gl.getShaderInfoLog(s));
+    throw new Error('Shader compile error');
+  }
+  return s;
+}
+
+const vs = compile(gl.VERTEX_SHADER, VERT);
+const fs = compile(gl.FRAGMENT_SHADER, FRAG);
+const prog = gl.createProgram();
+gl.attachShader(prog, vs);
+gl.attachShader(prog, fs);
+gl.linkProgram(prog);
+gl.useProgram(prog);
+
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
+const aPos = gl.getAttribLocation(prog, 'a_pos');
+gl.enableVertexAttribArray(aPos);
+gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+const uTime = gl.getUniformLocation(prog, 'u_time');
+const uRes = gl.getUniformLocation(prog, 'u_res');
+const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+const uDay = gl.getUniformLocation(prog, 'u_dayProgress');
+const uRippleCount = gl.getUniformLocation(prog, 'u_rippleCount');
+const uRipples = gl.getUniformLocation(prog, 'u_ripples');
+const uWakeCount = gl.getUniformLocation(prog, 'u_wakeCount');
+const uWakesA = gl.getUniformLocation(prog, 'u_wakesA');
+const uWakesB = gl.getUniformLocation(prog, 'u_wakesB');
+
+/* ============================================================
+   ===== 漣漪 + Wake 管理 =====================================
+=============================================================*/
+const MAX_RIPPLES = 30;
+const MAX_WAKES = 40;
+const ripples = [];
+const wakes = [];
+
+function spawnRipple(x, y, strength){
+  ripples.push({ x, y, birth: performance.now() / 1000, strength });
+  if(ripples.length > MAX_RIPPLES) ripples.shift();
+}
+
+function spawnWake(x, y, dirX, dirY, length, width, strength){
+  wakes.push({
+    x, y, dirX, dirY, length, width, strength,
+    birth: performance.now() / 1000
+  });
+  if(wakes.length > MAX_WAKES) wakes.shift();
+}
+
+function rippleStillActive(r, now){
+  const aspect = W / H;
+  const rx = r.x * aspect;
+  const ry = r.y;
+  const corners = [[0,0], [aspect,0], [0,1], [aspect,1]];
+  let maxDist = 0;
+  for(const [cx, cy] of corners){
+    const d = Math.sqrt((rx - cx)*(rx - cx) + (ry - cy)*(ry - cy));
+    if(d > maxDist) maxDist = d;
+  }
+  const speed = 0.08;
+  const age = now - r.birth;
+  const front = age * speed;
+  const packetWidth = 0.18 + age * 0.012;
+  return (front - packetWidth) < maxDist;
+}
+
+/* ============================================================
+   ===== 滑鼠狀態與互動 ======================================
+   - 維護平滑速度
+   - 根據速度沿軌跡產生 wake 粒子
+   - 根據速度偶爾產生二次小漣漪
+   - 偵測「移動 → 停止」轉換,發一次停止漣漪
+=============================================================*/
+const mouse = {
+  x: 0.5, y: 0.5,           // normalized (0~1)
+  px: -1, py: -1,           // pixel(上一次 raw event)
+  lastTime: 0,              // 上次 mousemove 的時間
+  velPxX: 0, velPxY: 0,     // 平滑後的像素速度(px/s)
+  speedPx: 0,               // 速度大小
+  state: 'stopped',         // 'moving' | 'stopped'
+  stoppedSince: 0,          // 連續低速開始時間
+  active: false
+};
+
+let lastWakeTime = 0;
+let lastSecondaryRippleTime = 0;
+let lastUserActivity = performance.now() / 1000;
+
+// 可調參數
+const PARAMS = {
+  WAKE_MIN_INTERVAL_MS: 14,        // 兩個 wake 粒子的最小間隔(原 28,減半)
+  WAKE_LENGTH_BASE: 0.030,         // wake 基礎長度(略加長)
+  WAKE_LENGTH_PER_SPEED: 0.00006,
+  WAKE_WIDTH: 0.014,               // 略寬,加強重疊
+  WAKE_STRENGTH_BASE: 0.18,
+  WAKE_STRENGTH_PER_SPEED: 0.00035,
+  WAKE_STRENGTH_MAX: 0.85,
+  WAKE_LIFE_S: 2.2,                // 壽命延長 1.5 → 2.2
+
+  // 位置插值:每次 mousemove 在路徑上「補」幾個粒子,徹底消除間距感
+  WAKE_INTERPOLATE_MAX_DIST: 14,   // 像素;若兩次 event 距離大於此,就插值多個粒子
+
+  SECONDARY_RIPPLE_INTERVAL_MS: 220,
+  SECONDARY_RIPPLE_SPEED_MIN: 250,
+  SECONDARY_RIPPLE_STRENGTH: 0.18,
+
+  STOP_SPEED_THRESHOLD: 60,
+  STOP_DELAY_S: 0.15,
+  MOVE_SPEED_THRESHOLD: 120,
+
+  STOP_RIPPLE_STRENGTH: 0.7,
+  CLICK_RIPPLE_STRENGTH: 1.2,
+
+  IDLE_BEFORE_AUTO_S: 30,
+  AUTO_INTERVAL_S: 10,
+};
+
+function onMove(clientX, clientY){
+  const nowMs = performance.now();
+  const now = nowMs / 1000;
+
+  // 像素 → normalized
+  const nx = clientX / window.innerWidth;
+  const ny = 1 - clientY / window.innerHeight;
+  mouse.x = nx;
+  mouse.y = ny;
+
+  // 計算原始速度
+  if(mouse.px >= 0){
+    const dt = Math.max(0.001, (nowMs - mouse.lastTime) / 1000);
+    const dPxX = (clientX - mouse.px);
+    const dPxY = (clientY - mouse.py);
+    const rawVxPx = dPxX / dt;
+    const rawVyPx = dPxY / dt;
+    const smooth = 0.6;
+    mouse.velPxX = mouse.velPxX * (1 - smooth) + rawVxPx * smooth;
+    mouse.velPxY = mouse.velPxY * (1 - smooth) + rawVyPx * smooth;
+    mouse.speedPx = Math.sqrt(mouse.velPxX*mouse.velPxX + mouse.velPxY*mouse.velPxY);
+  }
+
+  // === Wake 粒子(沿軌跡插值,徹底消除顆粒感)===
+  if(mouse.px >= 0 && mouse.speedPx > 30 && nowMs - lastWakeTime > PARAMS.WAKE_MIN_INTERVAL_MS){
+    const len2D = Math.sqrt(mouse.velPxX*mouse.velPxX + mouse.velPxY*mouse.velPxY);
+    if(len2D > 0.001){
+      const dirX = mouse.velPxX / len2D;
+      const dirY = -mouse.velPxY / len2D;   // y 翻轉
+
+      // 兩次 event 之間的距離(像素)
+      const segDx = clientX - mouse.px;
+      const segDy = clientY - mouse.py;
+      const segDist = Math.sqrt(segDx*segDx + segDy*segDy);
+
+      // 決定要在這個區段補幾個粒子
+      // 距離越長(滑鼠跳越遠)補越多,確保相鄰粒子不超過 WAKE_INTERPOLATE_MAX_DIST
+      const stepCount = Math.max(1, Math.ceil(segDist / PARAMS.WAKE_INTERPOLATE_MAX_DIST));
+
+      const wakeLen = PARAMS.WAKE_LENGTH_BASE + Math.min(800, mouse.speedPx) * PARAMS.WAKE_LENGTH_PER_SPEED;
+      const wakeWid = PARAMS.WAKE_WIDTH;
+      const wakeStr = Math.min(PARAMS.WAKE_STRENGTH_MAX,
+        PARAMS.WAKE_STRENGTH_BASE + mouse.speedPx * PARAMS.WAKE_STRENGTH_PER_SPEED);
+
+      // 沿線段均勻撒粒子
+      for(let s = 1; s <= stepCount; s++){
+        const k = s / stepCount;
+        const interpX = mouse.px + segDx * k;
+        const interpY = mouse.py + segDy * k;
+        const interpNx = interpX / window.innerWidth;
+        const interpNy = 1 - interpY / window.innerHeight;
+        // 強度沿線段微微遞增(讓最新位置最強,自然尾跡感)
+        const stepStr = wakeStr * (0.7 + 0.3 * k);
+        spawnWake(interpNx, interpNy, dirX, dirY, wakeLen, wakeWid, stepStr);
+      }
+      lastWakeTime = nowMs;
+    }
+  }
+
+  mouse.px = clientX;
+  mouse.py = clientY;
+  mouse.lastTime = nowMs;
+  mouse.active = true;
+  lastUserActivity = now;
+  nextAuto = -1;
+
+  // === 二次漣漪 ===
+  if(mouse.speedPx > PARAMS.SECONDARY_RIPPLE_SPEED_MIN
+     && nowMs - lastSecondaryRippleTime > PARAMS.SECONDARY_RIPPLE_INTERVAL_MS){
+    spawnRipple(nx, ny, PARAMS.SECONDARY_RIPPLE_STRENGTH);
+    lastSecondaryRippleTime = nowMs;
+  }
+}
+
+window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+window.addEventListener('mouseleave', () => { mouse.active = false; });
+window.addEventListener('touchmove', e => {
+  if(e.touches.length){ onMove(e.touches[0].clientX, e.touches[0].clientY); }
+}, { passive: true });
+window.addEventListener('click', e => {
+  spawnRipple(e.clientX / window.innerWidth, 1 - e.clientY / window.innerHeight, PARAMS.CLICK_RIPPLE_STRENGTH);
+});
+
+// === 自動中央漣漪(閒置 30s 後啟動,每 10s 一次)===
+let nextAuto = -1;
+
+/* ============================================================
+   日夜
+=============================================================*/
+let userLocation = { lat: 25.0330, lng: 121.5654 };
+let cachedDayProgress = 1.0;
+let cachedSunAltDeg = 30;
+let lastMoonRenderTime = 0;
+let cachedMoonPhase = 0.5;
+let lastClockMinute = -1;
+
+function initLocationFromTimezone(){
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const map = {
+      'Asia/Taipei':{lat:25.03,lng:121.57},'Asia/Tokyo':{lat:35.68,lng:139.69},
+      'Asia/Seoul':{lat:37.57,lng:126.98},'Asia/Shanghai':{lat:31.23,lng:121.47},
+      'Asia/Hong_Kong':{lat:22.32,lng:114.17},'Asia/Singapore':{lat:1.35,lng:103.82},
+      'Asia/Bangkok':{lat:13.76,lng:100.50},'Europe/London':{lat:51.51,lng:-0.13},
+      'Europe/Paris':{lat:48.86,lng:2.35},'Europe/Berlin':{lat:52.52,lng:13.40},
+      'America/New_York':{lat:40.71,lng:-74.01},'America/Los_Angeles':{lat:34.05,lng:-118.24},
+      'Australia/Sydney':{lat:-33.87,lng:151.21}
+    };
+    if(map[tz]) userLocation = map[tz];
+  } catch(e){}
+}
+initLocationFromTimezone();
+
+function getSunPosition(date){
+  const rad = Math.PI / 180;
+  const dayMs = 86400000, J1970 = 2440588, J2000 = 2451545;
+  const lat = userLocation.lat, lng = userLocation.lng;
+  function toJulian(d){ return d.valueOf() / dayMs - 0.5 + J1970; }
+  function toDays(d){ return toJulian(d) - J2000; }
+  const e = rad * 23.4397, lw = rad * -lng, phi = rad * lat, d = toDays(date);
+  const M = rad * (357.5291 + 0.98560028 * d);
+  const C = rad * (1.9148 * Math.sin(M) + 0.0200 * Math.sin(2*M));
+  const P = rad * 102.9372;
+  const L = M + C + P + Math.PI;
+  const dec = Math.asin(Math.sin(0)*Math.cos(e) + Math.cos(0)*Math.sin(e)*Math.sin(L));
+  const ra = Math.atan2(Math.sin(L)*Math.cos(e), Math.cos(L));
+  const sidereal = rad * (280.16 + 360.9856235 * d) - lw;
+  const H = sidereal - ra;
+  return Math.asin(Math.sin(phi)*Math.sin(dec) + Math.cos(phi)*Math.cos(dec)*Math.cos(H));
+}
+
+function getMoonPhase(date){
+  const synodic = 29.530588853;
+  const knownNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
+  const days = (date.getTime() - knownNewMoon) / 86400000;
+  let phase = (days / synodic) % 1;
+  if(phase < 0) phase += 1;
+  return phase;
+}
+
+function renderSunSVG(altDeg, isActive){
+  const norm = Math.max(0, Math.min(1, altDeg / 60));
+  const r = 255, g = Math.round(180 + 60 * norm), b = Math.round(120 + 100 * norm);
+  const opacity = isActive ? 0.95 : 0.30;
+  const color = `rgba(${r},${g},${b},${opacity})`;
+  const tilt = (1 - norm) * 15;
+  const rays = [];
+  for(let i = 0; i < 8; i++){
+    const a = i * Math.PI / 4;
+    const x1 = 12 + Math.cos(a) * 7, y1 = 12 + Math.sin(a) * 7;
+    const x2 = 12 + Math.cos(a) * 10, y2 = 12 + Math.sin(a) * 10;
+    rays.push(`<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${color}" stroke-width="1.2" stroke-linecap="round"/>`);
+  }
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(${tilt}deg);"><circle cx="12" cy="12" r="4.2" fill="${color}"/>${rays.join('')}</svg>`;
+}
+
+function renderMoonSVG(phase, isActive){
+  const cx = 12, cy = 12, r = 7;
+  const opacity = isActive ? 0.95 : 0.40;
+  const moonColor = `rgba(221,226,232,${opacity})`;
+  const id = 'mm_' + Math.floor(phase * 1000) + '_' + (isActive?'a':'b');
+  let illum, waxing;
+  if(phase < 0.5){ illum = phase * 2; waxing = true; }
+  else { illum = (1 - phase) * 2; waxing = false; }
+  const offset = illum * 2 * r;
+  const shadowCx = waxing ? (cx - offset) : (cx + offset);
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <defs><mask id="${id}"><rect x="0" y="0" width="24" height="24" fill="white"/><circle cx="${shadowCx.toFixed(2)}" cy="${cy}" r="${r}" fill="black"/></mask></defs>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,${(opacity*0.25).toFixed(2)})" stroke-width="0.6"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="${moonColor}" mask="url(#${id})"/>
+  </svg>`;
+}
+
+const sunIconEl = document.getElementById('sunIcon');
+const moonIconEl = document.getElementById('moonIcon');
+const clockTextEl = document.getElementById('clockText');
+
+function updateClockAndIcons(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  clockTextEl.textContent = `${hh}:${mm}`;
+  const minute = now.getHours() * 60 + now.getMinutes();
+  if(minute !== lastClockMinute){
+    lastClockMinute = minute;
+    const altRad = getSunPosition(now);
+    const altDeg = altRad * 180 / Math.PI;
+    cachedSunAltDeg = altDeg;
+    if(altDeg <= -6) cachedDayProgress = 0;
+    else if(altDeg >= 6) cachedDayProgress = 1;
+    else {
+      const t = (altDeg + 6) / 12;
+      cachedDayProgress = t * t * (3 - 2 * t);
+    }
+    const isDay = cachedDayProgress > 0.5;
+    sunIconEl.innerHTML = renderSunSVG(altDeg, isDay);
+    const moonInterval = isDay ? 14400000 : 3600000;
+    if(now.getTime() - lastMoonRenderTime >= moonInterval || cachedMoonPhase === 0.5){
+      cachedMoonPhase = getMoonPhase(now);
+      lastMoonRenderTime = now.getTime();
+    }
+    moonIconEl.innerHTML = renderMoonSVG(cachedMoonPhase, !isDay);
+  }
+}
+updateClockAndIcons();
+setInterval(updateClockAndIcons, 1000);
+
+/* ============================================================
+   主迴圈
+=============================================================*/
+const t0 = performance.now();
+const rippleData = new Float32Array(MAX_RIPPLES * 4);
+const wakeDataA = new Float32Array(MAX_WAKES * 4);
+const wakeDataB = new Float32Array(MAX_WAKES * 4);
+
+function frame(){
+  const t = (performance.now() - t0) / 1000;
+  const now = performance.now() / 1000;
+  const nowMs = performance.now();
+
+  // === 滑鼠狀態機:moving / stopped 轉換 ===
+  // 若距上次 mousemove 超過 80ms,認定速度衰減為 0(因為沒有 event 進來表示沒動了)
+  if(nowMs - mouse.lastTime > 80){
+    // 速度自然衰減
+    mouse.velPxX *= 0.85;
+    mouse.velPxY *= 0.85;
+    mouse.speedPx = Math.sqrt(mouse.velPxX*mouse.velPxX + mouse.velPxY*mouse.velPxY);
+  }
+
+  // 狀態判定
+  if(mouse.state === 'moving'){
+    if(mouse.speedPx < PARAMS.STOP_SPEED_THRESHOLD){
+      // 開始進入低速狀態,計時
+      if(mouse.stoppedSince === 0){
+        mouse.stoppedSince = now;
+      } else if(now - mouse.stoppedSince >= PARAMS.STOP_DELAY_S){
+        // 確認停止 → 發停止漣漪
+        if(mouse.active){
+          spawnRipple(mouse.x, mouse.y, PARAMS.STOP_RIPPLE_STRENGTH);
+        }
+        mouse.state = 'stopped';
+        mouse.stoppedSince = 0;
+      }
+    } else {
+      // 仍在動,重置計時
+      mouse.stoppedSince = 0;
+    }
+  } else { // 'stopped'
+    if(mouse.speedPx > PARAMS.MOVE_SPEED_THRESHOLD){
+      mouse.state = 'moving';
+      mouse.stoppedSince = 0;
+    }
+  }
+
+  // === 自動中央漣漪 ===
+  const idleTime = now - lastUserActivity;
+  if(idleTime >= PARAMS.IDLE_BEFORE_AUTO_S){
+    if(nextAuto < 0) nextAuto = now;
+    if(now >= nextAuto){
+      const cx = 0.5 + (Math.random() - 0.5) * 0.04;
+      const cy = 0.5 + (Math.random() - 0.5) * 0.04;
+      spawnRipple(cx, cy, 0.5 + Math.random() * 0.5);
+      nextAuto = now + PARAMS.AUTO_INTERVAL_S;
+    }
+  }
+
+  // === 清過期 ===
+  for(let i = ripples.length - 1; i >= 0; i--){
+    if(!rippleStillActive(ripples[i], now)) ripples.splice(i, 1);
+  }
+  for(let i = wakes.length - 1; i >= 0; i--){
+    if(now - wakes[i].birth > 2.4) wakes.splice(i, 1);
+  }
+
+  // === 填 uniform ===
+  rippleData.fill(0);
+  for(let i = 0; i < ripples.length && i < MAX_RIPPLES; i++){
+    const r = ripples[i];
+    rippleData[i*4]   = r.x;
+    rippleData[i*4+1] = r.y;
+    rippleData[i*4+2] = now - r.birth;
+    rippleData[i*4+3] = r.strength;
+  }
+
+  wakeDataA.fill(0);
+  wakeDataB.fill(0);
+  for(let i = 0; i < wakes.length && i < MAX_WAKES; i++){
+    const w = wakes[i];
+    wakeDataA[i*4]   = w.x;
+    wakeDataA[i*4+1] = w.y;
+    wakeDataA[i*4+2] = now - w.birth;
+    wakeDataA[i*4+3] = w.strength;
+    wakeDataB[i*4]   = w.dirX;
+    wakeDataB[i*4+1] = w.dirY;
+    wakeDataB[i*4+2] = w.length;
+    wakeDataB[i*4+3] = w.width;
+  }
+
+  gl.uniform1f(uTime, t);
+  gl.uniform2f(uRes, cv.width, cv.height);
+  gl.uniform2f(uMouse, mouse.x, mouse.y);
+  gl.uniform1f(uDay, cachedDayProgress);
+  gl.uniform1i(uRippleCount, Math.min(ripples.length, MAX_RIPPLES));
+  gl.uniform4fv(uRipples, rippleData);
+  gl.uniform1i(uWakeCount, Math.min(wakes.length, MAX_WAKES));
+  gl.uniform4fv(uWakesA, wakeDataA);
+  gl.uniform4fv(uWakesB, wakeDataB);
+
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  requestAnimationFrame(frame);
+}
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
