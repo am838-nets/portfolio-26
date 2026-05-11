@@ -2,259 +2,641 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Creation — 鄭乃慈 Nai Tzu Cheng</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@200;300;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@400&family=Noto+Sans+TC:wght@300;400&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{
-    width:100%;height:100%;overflow:hidden;
-    background:#000;color:#fff;
-    font-family:'Inter','Noto Sans TC',sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  #scene{position:fixed;inset:0;z-index:1;display:block;}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #f5f3ec;
+  --ink-dim: rgba(245,243,236,0.55);
+  --ink-mute: rgba(245,243,236,0.3);
+  --series-zoo: rgba(241,165,200,1);    /* pink */
+  --series-ufo: rgba(80,200,255,1);     /* fluorescent blue */
+  --series-duck: rgba(255,160,80,1);    /* orange */
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-tc: 'Noto Sans TC', sans-serif;
+}
+html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); font-family: var(--font-sans); overflow: hidden; }
 
-  .corner-tl{position:fixed;top:56px;left:60px;z-index:20;line-height:1.35;}
-  .corner-tl a{text-decoration:none;color:inherit;display:block;}
-  .corner-tl .name-zh{font-size:16px;font-weight:500;letter-spacing:0.12em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,0.6);}
-  .corner-tl .name-en{font-family:'JetBrains Mono',monospace;font-size:9px;color:#ddd;letter-spacing:0.28em;margin-top:5px;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
+/* ============ POND - bigger, brighter, sits visibly under the items ============ */
+.pond-wrap {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  /* Pulled down so it's visible BELOW the center item, peeking out */
+  transform: translate(-50%, 30%);
+  width: 720px;
+  height: 720px;
+  z-index: 5;
+  pointer-events: none;
+  perspective: 700px;
+}
+.pond {
+  width: 100%;
+  height: 100%;
+  transform: rotateX(74deg);
+  transform-origin: center center;
+  position: relative;
+  /* Larger visible pond, softer falloff */
+  mask-image: radial-gradient(ellipse 48% 48% at 50% 50%, black 0%, black 65%, transparent 96%);
+  -webkit-mask-image: radial-gradient(ellipse 48% 48% at 50% 50%, black 0%, black 65%, transparent 96%);
+}
+#pondCanvas { width: 100%; height: 100%; display: block; }
 
-  /* 中央 Coming Soon */
-  .center-text{
-    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-    z-index:18;text-align:center;pointer-events:none;
-  }
-  .center-text .label{
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;letter-spacing:0.45em;
-    color:#fff;text-transform:uppercase;
-    margin-bottom:24px;
-    text-shadow:
-      0 0 1px rgba(255,255,255,0.95),
-      0 0 3px rgba(255,255,255,0.85),
-      0 0 8px rgba(220,240,255,0.55),
-      0 0 16px rgba(180,220,255,0.35),
-      0 0 26px rgba(150,210,255,0.20);
-    animation: neonBreath 3.6s ease-in-out infinite;
-  }
-  .center-text .title{
-    font-family:'Inter','Noto Sans TC',sans-serif;
-    font-size:64px;font-weight:200;letter-spacing:0.08em;
-    color:#fff;text-transform:uppercase;
-    text-shadow:0 2px 20px rgba(0,0,0,0.5);
-    line-height:1;
-  }
-  .center-text .subtitle{
-    margin-top:20px;
-    font-family:'JetBrains Mono',monospace;
-    font-size:10px;letter-spacing:0.32em;
-    color:#bbb;text-transform:uppercase;
-    text-shadow:0 1px 4px rgba(0,0,0,0.6);
-  }
-  @keyframes neonBreath {
-    0%, 100% { filter: brightness(1); }
-    50%      { filter: brightness(1.12); }
-  }
+.pond-glow {
+  position: fixed;
+  left: 50%; top: 50%;
+  transform: translate(-50%, 25%);
+  width: 90vw; height: 60vh;
+  z-index: 2; pointer-events: none;
+  background: radial-gradient(ellipse 50% 35% at 50% 50%, var(--glow-color, rgba(255,160,80,0.25)) 0%, transparent 70%);
+  filter: blur(32px);
+  transition: background 900ms ease;
+}
 
-  /* 返回首頁 */
-  .back-link{
-    position:fixed;top:56px;right:60px;z-index:20;
-    font-family:'JetBrains Mono',monospace;
-    font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
-    color:#ddd;text-decoration:none;
-    text-shadow:
-      0 0 2px rgba(255,255,255,0.5),
-      0 0 8px rgba(220,240,255,0.3),
-      0 1px 4px rgba(0,0,0,0.6);
-    transition:color 0.3s ease, text-shadow 0.4s ease;
-  }
-  .back-link:hover{
-    color:#fff;
-    text-shadow:
-      0 0 2px rgba(255,255,255,1),
-      0 0 10px rgba(255,250,235,0.6),
-      0 0 20px rgba(255,240,210,0.35);
-  }
-  .back-link::before{ content:'← '; }
+/* ============ STAGE - ring of items ============ */
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1600px;
+  perspective-origin: 50% 45%;
+  pointer-events: none;
+}
+.ring {
+  position: relative;
+  width: 1px; height: 1px;
+  transform-style: preserve-3d;
+  margin-top: -10vh;
+}
 
-  .corner-br{
-    position:fixed;bottom:56px;right:60px;z-index:20;
-    font-family:'JetBrains Mono',monospace;
-    font-size:10px;letter-spacing:0.22em;color:#bbb;text-transform:uppercase;
-    text-shadow:0 1px 4px rgba(0,0,0,0.6);
-  }
+.item {
+  position: absolute;
+  left: 0; top: 0;
+  width: 280px; height: 280px;
+  margin-left: -140px;
+  margin-top: -140px;
+  transform-style: preserve-3d;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 850ms cubic-bezier(.4,.0,.2,1);
+}
+.item-inner {
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 700ms cubic-bezier(.4,.0,.2,1), filter 700ms;
+}
+.item-art {
+  width: 100%;
+  height: 78%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.item-art img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  /* NO filter/drop-shadow on the image itself - keeps colors pure */
+  user-select: none;
+  -webkit-user-drag: none;
+}
 
-  @media (max-width:768px){
-    .corner-tl{top:32px;left:32px;}
-    .back-link{top:32px;right:32px;}
-    .corner-br{bottom:32px;right:32px;}
-    .center-text .title{font-size:42px;}
-    .center-text .label{font-size:10px;}
-  }
+/* Glow comes from behind the image via a separate layer, not via filter */
+.item-art::before {
+  content: '';
+  position: absolute;
+  inset: -10%;
+  background: radial-gradient(ellipse 60% 60% at 50% 55%, var(--glow, rgba(255,200,140,0.18)), transparent 70%);
+  filter: blur(20px);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 600ms;
+  pointer-events: none;
+}
+.item.is-center .item-art::before {
+  opacity: 1;
+}
+
+.item-art.placeholder {
+  width: 60%; height: 78%;
+  background: radial-gradient(ellipse at center, rgba(255,245,220,0.06), rgba(255,245,220,0.01));
+  border: 1px dashed rgba(245,243,236,0.18);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.15em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  text-align: center;
+  padding: 16px; line-height: 1.6;
+}
+
+.series-band {
+  width: 50px; height: 1px;
+  margin-top: 8px;
+  background: var(--band-color, rgba(245,243,236,0.2));
+  box-shadow: 0 0 6px var(--band-color, rgba(245,243,236,0.2));
+  opacity: 0.55;
+  transition: width 700ms, opacity 700ms;
+}
+
+/* ============ STATES ============ */
+.item.is-center .item-inner {
+  opacity: 1 !important;
+  filter: none !important;
+}
+.item.is-center .series-band {
+  width: 120px;
+  opacity: 1;
+}
+.item.is-center .item-art {
+  animation: float-c 6.5s ease-in-out infinite;
+}
+@keyframes float-c {
+  0%,100% { transform: translateY(0) rotate(-0.4deg); }
+  50% { transform: translateY(-12px) rotate(0.4deg); }
+}
+
+.item.is-center.entering .item-inner {
+  animation: enter 900ms cubic-bezier(.2,.7,.3,1.2) both;
+}
+@keyframes enter {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.item.is-side .item-inner { opacity: 0.65; }
+.item.is-back .item-inner { opacity: 0.32; filter: blur(1.2px); }
+.item.is-far .item-inner  { opacity: 0.1; filter: blur(2px); }
+
+/* ============ CORNER UI ============ */
+.corner {
+  position: fixed;
+  z-index: 100;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+.corner a { color: inherit; text-decoration: none; transition: color .25s; }
+.corner a:hover { color: var(--ink); }
+.tl { top: 28px; left: 32px; line-height: 1.6; }
+.tl .name-tc { font-family: var(--font-tc); font-size: 13px; letter-spacing: 0.15em; color: var(--ink); font-weight: 400; text-transform: none; display: block; margin-bottom: 2px; }
+.tl .name-en { font-size: 10px; color: var(--ink-dim); }
+.tr { top: 28px; right: 32px; }
+.tr a { display: inline-flex; align-items: center; gap: 8px; }
+.tr a::before { content: '←'; opacity: 0.5; }
+
+/* ============ INFO PANEL ============ */
+.info {
+  position: fixed;
+  left: 50%;
+  bottom: 12vh;
+  transform: translateX(-50%);
+  z-index: 60;
+  text-align: center;
+  pointer-events: none;
+  width: 90%;
+  max-width: 540px;
+}
+.info-series {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  opacity: 0.9;
+  transition: color 700ms, opacity 500ms;
+}
+.info-title {
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  margin-bottom: 6px;
+  transition: opacity 400ms;
+}
+.info-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--ink-dim);
+  transition: opacity 400ms;
+}
+.info.changing .info-title, .info.changing .info-meta { opacity: 0; }
+
+/* ============ CONTROLS ============ */
+.controls {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-family: var(--font-mono);
+}
+.arrow {
+  width: 40px; height: 40px;
+  border: 1px solid var(--ink-mute);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-dim);
+  font-size: 14px;
+  cursor: pointer;
+  background: rgba(5,5,5,0.55);
+  backdrop-filter: blur(6px);
+  transition: all .25s;
+  user-select: none;
+}
+.arrow:hover { border-color: var(--ink); color: var(--ink); box-shadow: 0 0 14px rgba(255,245,220,0.15); }
+.arrow:active { transform: scale(0.94); }
+.counter {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--ink-dim);
+  min-width: 56px;
+  text-align: center;
+}
+.counter strong { color: var(--ink); font-weight: 500; }
+
+.series-dots {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+}
+.series-dots .dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(245,243,236,0.2);
+  transition: all .4s;
+}
+.series-dots .dot.active {
+  background: var(--ink);
+  width: 18px;
+  border-radius: 3px;
+}
+
+.hint {
+  position: fixed;
+  bottom: 14px;
+  right: 32px;
+  z-index: 80;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+}
+.hint kbd {
+  font-family: inherit;
+  border: 1px solid var(--ink-mute);
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin: 0 2px;
+  color: var(--ink-dim);
+}
+
+@media (max-width: 768px) {
+  .item { width: 200px; height: 200px; margin-left: -100px; margin-top: -100px; }
+  .info-title { font-size: 22px; }
+  .info { bottom: 14vh; }
+  .pond-wrap { width: 480px; height: 480px; }
+  .tl .name-tc { font-size: 12px; }
+  .hint { display: none; }
+  .series-dots { bottom: 90px; }
+}
 </style>
 </head>
 <body>
 
-<canvas id="scene"></canvas>
+<div class="pond-glow" id="pondGlow"></div>
+<div class="pond-wrap"><div class="pond"><canvas id="pondCanvas"></canvas></div></div>
 
-<a class="corner-tl" href="index.html">
-  <div class="name-zh">鄭乃慈</div>
-  <div class="name-en">Nai Tzu Cheng</div>
-</a>
+<div class="corner tl">
+  <span class="name-tc">鄭乃慈</span>
+  <span class="name-en">NAI TZU CHENG</span>
+</div>
+<div class="corner tr"><a href="index.html">Home</a></div>
 
-<a class="back-link" href="index.html">Home</a>
+<div class="stage"><div class="ring" id="ring"></div></div>
 
-<div class="center-text">
-  <div class="label">Creation</div>
-  <div class="title">Coming Soon</div>
-  <div class="subtitle">In progress · 2026</div>
+<div class="info" id="info">
+  <div class="info-series" id="info-series">DUCK PARK SERIES</div>
+  <div class="info-title" id="info-title">Magic Duck II — Sculpture</div>
+  <div class="info-meta" id="info-meta">Banqiao Duck Park · 2024</div>
 </div>
 
-<div class="corner-br">Portfolio 2026</div>
+<div class="series-dots" id="dots"></div>
+
+<div class="controls">
+  <div class="arrow" id="prev">‹</div>
+  <div class="counter"><strong id="cur">04</strong> / 12</div>
+  <div class="arrow" id="next">›</div>
+</div>
+
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> Navigate · Drag to rotate</div>
 
 <script>
-/* 簡化版水池:只有環境流動、沒有滑鼠互動、漣漪用一個自動的中央輕拍 */
-const cv = document.getElementById('scene');
-const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false });
-if(!gl){ document.body.style.background = '#0a1820'; throw new Error('No WebGL'); }
+const T = {
+  "magic_duck": "creations/magic_duck.png",
+  "magic_duck2": "creations/magic_duck2.png",
+  "pumkin": "creations/pumkin.png",
+  "pumking2": "creations/pumking2.png",
+  "cats": "creations/cats.png",
+  "mushroom": "creations/mushroom.png",
+  "trees": "creations/trees.png",
+  "books": "creations/books.png",
+  "broom": "creations/broom.png",
+};
 
-let W=0, H=0;
-const dpr = Math.min(window.devicePixelRatio || 1, 2);
-function fit(){
-  W = window.innerWidth; H = window.innerHeight;
-  cv.style.width = W+'px'; cv.style.height = H+'px';
-  cv.width = Math.floor(W*dpr); cv.height = Math.floor(H*dpr);
-  gl.viewport(0, 0, cv.width, cv.height);
-}
-fit();
-window.addEventListener('resize', fit);
+const items = [
+  { id:'01', name:'Otter — Aroma Stone', series:'zoo', client:'Taipei Zoo · 2025', img:null },
+  { id:'02', name:'UFO — Public Installation', series:'ufo', client:'Xizhi Stellar Park · 2024', img:null },
+  { id:'03', name:'Magic Duck I — Sculpture', series:'duck', client:'Banqiao Duck Park · 2024', img:'magic_duck' },
+  { id:'04', name:'Magic Duck II — Sculpture', series:'duck', client:'Banqiao Duck Park · 2024', img:'magic_duck2' },
+  { id:'05', name:'Pumpkin I — Heart Weave', series:'duck', client:'Banqiao Duck Park · 2024', img:'pumkin' },
+  { id:'06', name:'Pumpkin II — Jack-o-Lantern', series:'duck', client:'Banqiao Duck Park · 2024', img:'pumking2' },
+  { id:'07', name:'Cats Tower — Stack', series:'duck', client:'Banqiao Duck Park · 2024', img:'cats' },
+  { id:'08', name:'Mushroom Trio', series:'duck', client:'Banqiao Duck Park · 2024', img:'mushroom' },
+  { id:'09', name:'Tree Forest — Heart Arch', series:'duck', client:'Banqiao Duck Park · 2024', img:'trees' },
+  { id:'10', name:'Book Set — Letters', series:'duck', client:'Banqiao Duck Park · 2024', img:'books' },
+  { id:'11', name:'Broom Collection', series:'duck', client:'Banqiao Duck Park · 2024', img:'broom' },
+  { id:'12', name:'Coming Soon', series:null, client:'Future · TBD', img:null },
+];
 
-const VERT = `attribute vec2 a_pos;varying vec2 v_uv;void main(){v_uv=a_pos*0.5+0.5;gl_Position=vec4(a_pos,0.0,1.0);}`;
+const seriesMap = {
+  zoo:  { label:'PRODUCT DEVELOPMENT', color:'rgba(241,165,200,1)', pond:[0.95, 0.65, 0.82], glow:'rgba(241,165,200,0.28)' },   // pink
+  ufo:  { label:'PUBLIC INSTALLATION', color:'rgba(80,200,255,1)',   pond:[0.31, 0.78, 1.0],  glow:'rgba(80,200,255,0.3)'   },   // fluorescent blue
+  duck: { label:'DUCK PARK EXHIBITION', color:'rgba(255,160,80,1)',  pond:[1.0, 0.62, 0.31],  glow:'rgba(255,160,80,0.28)'  },   // orange
+  none: { label:'— · —', color:'rgba(245,243,236,0.4)', pond:[0.7, 0.7, 0.7], glow:'rgba(245,245,220,0.15)' },
+};
 
-const FRAG = `
-precision highp float;
-varying vec2 v_uv;
-uniform float u_time;
-uniform vec2 u_res;
+const ring = document.getElementById('ring');
+const N = items.length;
+let centerIdx = 3;
+let prevCenter = -1;
 
-float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
-float noise(vec2 p){
-  vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
-  float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
-  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
-}
-float fbm(vec2 p){float v=0.0,a=0.5;for(int i=0;i<5;i++){v+=a*noise(p);p*=2.02;a*=0.5;}return v;}
-float fbmStretch(vec2 p){p.y*=0.18;float v=0.0,a=0.5;for(int i=0;i<4;i++){v+=a*noise(p);p*=2.1;a*=0.5;}return v;}
+const RADIUS_X = 360;
+const RADIUS_Y = 140;
+const DEPTH = 500;
 
-vec3 pondFloor(vec2 uv,float time){
-  vec2 flow1=vec2(time*0.005,time*0.008);
-  vec2 flow2=vec2(-time*0.004,time*0.003);
-  vec3 deepWater=vec3(0.025,0.10,0.11);
-  vec3 shallowWater=vec3(0.10,0.36,0.30);
-  float depth=fbm(uv*2.5+flow1);
-  vec3 baseColor=mix(deepWater,shallowWater,smoothstep(0.3,0.7,depth));
-  vec2 grassUV=uv*vec2(8.0,14.0)+vec2(time*0.01,0.0);
-  float grass=fbmStretch(grassUV);
-  float grassMask=smoothstep(0.45,0.65,fbm(uv*1.8+flow2));
-  grass=smoothstep(0.35,0.7,grass);
-  vec3 grassColor=vec3(0.10,0.42,0.18);
-  vec3 grassTip=vec3(0.45,0.78,0.22);
-  float tipMask=smoothstep(0.55,0.8,noise(grassUV*1.5+flow1*2.0));
-  vec3 grassFinal=mix(grassColor,grassTip,tipMask*0.7);
-  baseColor=mix(baseColor,grassFinal,grass*grassMask*0.85);
-  float stoneNoise=fbm(uv*3.5+vec2(7.0,13.0));
-  float stoneMask=smoothstep(0.62,0.7,stoneNoise)*(1.0-grassMask*0.7);
-  baseColor=mix(baseColor,vec3(0.18,0.20,0.18),stoneMask*0.45);
-  return baseColor;
-}
-
-float caustics(vec2 uv,float time){
-  vec2 p1=uv*6.0+vec2(time*0.06,time*0.04);
-  vec2 p2=uv*7.0+vec2(-time*0.05,time*0.07);
-  float c=pow(1.0-abs(noise(p1)-0.5)*2.0,4.0);
-  c+=pow(1.0-abs(noise(p2)-0.5)*2.0,4.0);
-  return c*0.5;
-}
-
-void main(){
-  vec2 uv=v_uv;
-  float aspect=u_res.x/u_res.y;
-  vec2 uvAspect=vec2(uv.x*aspect,uv.y);
-
-  /* 自動中央漣漪:每 8 秒一次,從中心擴出 */
-  float cyclePeriod=8.0;
-  float cycleT=mod(u_time,cyclePeriod);
-  vec2 center=vec2(0.5*aspect,0.5);
-  float dist=length(uvAspect-center);
-  float speed=0.08;
-  float front=cycleT*speed;
-  float offset=dist-front;
-  float packetWidth=0.18+cycleT*0.012;
-  float rippleH=0.0;
-  vec2 dH=vec2(0);
-  if(abs(offset)<packetWidth){
-    float env=exp(-pow(offset/packetWidth,2.0)*1.4);
-    float carrier=sin(-offset/0.040*6.2831);
-    float ageAtt=exp(-cycleT*0.18);
-    rippleH=0.7*env*carrier*ageAtt;
-    float gradMag=0.7*env*cos(-offset/0.040*6.2831)*(6.2831/0.040)*ageAtt;
-    if(dist>0.0001){vec2 d2=(uvAspect-center)/dist;dH+=gradMag*d2;}
+const itemEls = items.map((it, i) => {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.dataset.idx = i;
+  const sCol = it.series ? seriesMap[it.series].color : 'rgba(245,243,236,0.18)';
+  const sGlow = it.series ? seriesMap[it.series].glow : 'rgba(255,245,220,0.15)';
+  let artHTML;
+  if (it.img && T[it.img]) {
+    artHTML = `<div class="item-art" style="--glow:${sGlow}"><img src="${T[it.img]}" alt="${it.name}"></div>`;
+  } else {
+    const lbl = it.id === '12' ? 'Coming<br>Soon' : it.name.split('—')[0].trim() + '<br><span style="opacity:.5">圖待補</span>';
+    artHTML = `<div class="item-art placeholder">${lbl}</div>`;
   }
+  div.innerHTML = `<div class="item-inner">${artHTML}<div class="series-band" style="--band-color:${sCol}"></div></div>`;
+  div.addEventListener('click', () => goTo(i));
+  ring.appendChild(div);
+  return div;
+});
 
-  /* 基礎水流 */
-  vec2 flow1=vec2(u_time*0.04,u_time*0.025);
-  vec2 flow2=vec2(-u_time*0.03,u_time*0.05);
-  float baseFlow=fbm(uvAspect*4.0+flow1)-0.5;
-  baseFlow+=(fbm(uvAspect*6.0+flow2)-0.5)*0.5;
-  baseFlow*=0.04;
-  rippleH+=baseFlow;
-  float eps=0.004;
-  float bfx=fbm((uvAspect+vec2(eps,0))*4.0+flow1)-fbm((uvAspect-vec2(eps,0))*4.0+flow1);
-  float bfy=fbm((uvAspect+vec2(0,eps))*4.0+flow1)-fbm((uvAspect-vec2(0,eps))*4.0+flow1);
-  dH+=vec2(bfx,bfy)*0.5;
+function layout() {
+  items.forEach((it, i) => {
+    let rel = i - centerIdx;
+    if (rel > N/2) rel -= N;
+    if (rel < -N/2) rel += N;
 
-  vec2 distortedUV=uvAspect+dH*0.018;
-  vec3 floorColor=pondFloor(distortedUV,u_time);
-  float caus=caustics(distortedUV*0.8,u_time);
-  caus=caus*(1.0+max(0.0,rippleH)*6.0*0.5);
-  floorColor+=vec3(1.0,0.95,0.75)*caus*0.18;
-  float surfaceShine=max(0.0,rippleH)*8.0;
-  surfaceShine=pow(min(1.0,surfaceShine),1.5);
-  floorColor+=vec3(1.0,0.98,0.92)*surfaceShine*0.35;
-  floorColor*=(1.0-max(0.0,-rippleH)*6.0*0.3);
+    const theta = rel * (2 * Math.PI / N);
 
-  float distToCenter=length(uvAspect-center);
-  float coreLight=pow(1.0-smoothstep(0.0,0.30,distToCenter),1.5);
-  float midLight=1.0-smoothstep(0.18,0.55,distToCenter);
-  floorColor*=0.15+midLight*0.55+coreLight*0.55;
-  floorColor*=1.0-smoothstep(0.5,0.95,distToCenter)*0.5;
-  floorColor+=vec3(1.0,0.96,0.85)*coreLight*0.12;
+    const x = Math.sin(theta) * RADIUS_X;
+    const y = -(1 - Math.cos(theta)) * RADIUS_Y;
+    const z = Math.cos(theta) * DEPTH;
 
-  gl_FragColor=vec4(floorColor,1.0);
+    const isCenter = Math.abs(rel) < 0.5;
+    const scale = isCenter ? 1.0 : 0.5;
+
+    const el = itemEls[i];
+    el.style.transform = `translate3d(${x}px, ${y}px, ${z - DEPTH * 0.3}px) scale(${scale})`;
+    el.style.zIndex = Math.round(1000 + z);
+
+    el.classList.remove('is-center','is-side','is-back','is-far','entering');
+    const absR = Math.abs(rel);
+    if (absR < 0.5) {
+      el.classList.add('is-center');
+      if (i !== prevCenter) {
+        void el.offsetWidth;
+        el.classList.add('entering');
+      }
+    }
+    else if (absR < 1.7) el.classList.add('is-side');
+    else if (absR < 3.5) el.classList.add('is-back');
+    else el.classList.add('is-far');
+  });
+
+  const it = items[centerIdx];
+  const info = document.getElementById('info');
+  info.classList.add('changing');
+  setTimeout(() => {
+    document.getElementById('cur').textContent = it.id;
+    document.getElementById('info-title').textContent = it.name;
+    document.getElementById('info-meta').textContent = it.client;
+    const seriesKey = it.series || 'none';
+    const sInfo = seriesMap[seriesKey];
+    const sEl = document.getElementById('info-series');
+    sEl.textContent = sInfo.label;
+    sEl.style.color = sInfo.color;
+    pondColor = sInfo.pond;
+    document.getElementById('pondGlow').style.setProperty('--glow-color', sInfo.glow);
+    info.classList.remove('changing');
+  }, 200);
+
+  buildDots();
+  prevCenter = centerIdx;
 }
-`;
 
-function compile(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(sh));throw new Error;}return sh;}
-const vs=compile(gl.VERTEX_SHADER,VERT);
-const fs=compile(gl.FRAGMENT_SHADER,FRAG);
-const prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);gl.useProgram(prog);
-const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
-const aPos=gl.getAttribLocation(prog,'a_pos');gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
-const uTime=gl.getUniformLocation(prog,'u_time');
-const uRes=gl.getUniformLocation(prog,'u_res');
-const t0=performance.now();
-function frame(){
-  const t=(performance.now()-t0)/1000;
-  gl.uniform1f(uTime,t);
-  gl.uniform2f(uRes,cv.width,cv.height);
-  gl.drawArrays(gl.TRIANGLES,0,6);
-  requestAnimationFrame(frame);
+function buildDots() {
+  const dots = document.getElementById('dots');
+  dots.innerHTML = '';
+  items.forEach((it, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === centerIdx ? ' active' : '');
+    if (i === centerIdx && it.series) {
+      d.style.background = seriesMap[it.series].color;
+    }
+    dots.appendChild(d);
+  });
 }
-requestAnimationFrame(frame);
+
+function goTo(idx) {
+  if (idx === centerIdx) return;
+  centerIdx = idx;
+  layout();
+}
+
+document.getElementById('next').addEventListener('click', () => goTo((centerIdx+1) % N));
+document.getElementById('prev').addEventListener('click', () => goTo((centerIdx-1+N) % N));
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo((centerIdx-1+N) % N); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); goTo((centerIdx+1) % N); }
+  else if (e.key === 'Home') { goTo(0); }
+  else if (e.key === 'End')  { goTo(N-1); }
+});
+
+/* Drag to rotate */
+let isDragging = false, dragStartX = 0, dragStartIdx = 0;
+const DRAG_THRESHOLD = 70;
+window.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.arrow') || e.target.closest('a')) return;
+  isDragging = true; dragStartX = e.clientX; dragStartIdx = centerIdx;
+  document.body.style.cursor = 'grabbing';
+});
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - dragStartX;
+  const newIdx = (dragStartIdx - Math.round(dx / DRAG_THRESHOLD) + N * 10) % N;
+  if (newIdx !== centerIdx) { centerIdx = newIdx; layout(); }
+});
+window.addEventListener('mouseup', () => { isDragging = false; document.body.style.cursor = ''; });
+window.addEventListener('touchstart', (e) => {
+  if (e.target.closest('.arrow') || e.target.closest('a')) return;
+  isDragging = true; dragStartX = e.touches[0].clientX; dragStartIdx = centerIdx;
+}, {passive: true});
+window.addEventListener('touchmove', (e) => {
+  if (!isDragging) return;
+  const dx = e.touches[0].clientX - dragStartX;
+  const newIdx = (dragStartIdx - Math.round(dx / DRAG_THRESHOLD) + N * 10) % N;
+  if (newIdx !== centerIdx) { centerIdx = newIdx; layout(); }
+}, {passive: true});
+window.addEventListener('touchend', () => { isDragging = false; });
+
+layout();
+setTimeout(() => {
+  const c = itemEls[centerIdx]; void c.offsetWidth; c.classList.add('entering');
+}, 50);
+
+/* ============ POND SHADER ============ */
+const cv = document.getElementById('pondCanvas');
+const gl = cv.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: false });
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+let pondColor = seriesMap.duck.pond;
+
+function fitPond() {
+  const r = cv.getBoundingClientRect();
+  cv.width = Math.floor(r.width * dpr); cv.height = Math.floor(r.height * dpr);
+  if (gl) gl.viewport(0, 0, cv.width, cv.height);
+}
+fitPond();
+window.addEventListener('resize', fitPond);
+
+if (gl) {
+  const VS = `attribute vec2 a_pos; varying vec2 v_uv;
+    void main(){ v_uv = a_pos*0.5+0.5; gl_Position = vec4(a_pos,0.,1.); }`;
+  const FS = `precision highp float;
+    varying vec2 v_uv;
+    uniform float u_t;
+    uniform vec2 u_res;
+    uniform float u_rippleAge;
+    uniform vec3 u_color;
+    float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+    float noise(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+      return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y); }
+    float fbm(vec2 p){ float v=0.,a=0.5; for(int i=0;i<5;i++){v+=a*noise(p);p*=2.02;a*=0.5;} return v; }
+
+    void main(){
+      vec2 uv = v_uv;
+      vec2 px = uv;
+      px.x *= u_res.x/u_res.y;
+      vec2 center = vec2(0.5*u_res.x/u_res.y, 0.5);
+      float dist = length(px - center);
+
+      vec2 cuv = px * 5.0 + vec2(u_t*0.05, u_t*0.03);
+      float caustic = fbm(cuv);
+      caustic += fbm(cuv*2.0 - vec2(u_t*0.02,0.))*0.55;
+      caustic = pow(caustic, 1.6);
+
+      float pool = smoothstep(0.6, 0.0, dist);
+      pool = pow(pool, 0.9);
+
+      if (u_rippleAge > 0.0 && u_rippleAge < 5.0) {
+        float rd = dist;
+        float front = u_rippleAge * 0.08;
+        float w = rd - front;
+        if (abs(w) < 0.22) {
+          float env = exp(-pow(w/0.22, 2.0)*1.6);
+          float wave = sin(w*60.0 - u_t*2.0);
+          float life = 1.0 - smoothstep(0.0, 5.0, u_rippleAge);
+          caustic += wave*env*life*0.35;
+        }
+      }
+
+      // Brighter, more saturated pond
+      vec3 deep = u_color * 0.6;
+      vec3 bright = u_color * 1.15;
+      vec3 col = vec3(0.0);
+      col += deep * pool * 0.7;
+      col += bright * caustic * pool * 1.3;
+      col += bright * pool * 0.45;
+
+      float alpha = pool * 1.0 + caustic * pool * 0.6;
+      alpha = clamp(alpha, 0.0, 1.0);
+      gl_FragColor = vec4(col, alpha);
+    }`;
+  function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);
+    if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(x));return x;}
+  const p = gl.createProgram();
+  gl.attachShader(p,sh(gl.VERTEX_SHADER,VS));
+  gl.attachShader(p,sh(gl.FRAGMENT_SHADER,FS));
+  gl.linkProgram(p); gl.useProgram(p);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+  const lp = gl.getAttribLocation(p,'a_pos');
+  gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+  const u_t=gl.getUniformLocation(p,'u_t'),
+        u_r=gl.getUniformLocation(p,'u_res'),
+        u_ra=gl.getUniformLocation(p,'u_rippleAge'),
+        u_col=gl.getUniformLocation(p,'u_color');
+
+  let currentColor = [...pondColor];
+  let start=performance.now(), lastRip=-100;
+  function frame(){
+    const t=(performance.now()-start)/1000;
+    if (t-lastRip > 8) lastRip = t;
+    for (let i = 0; i < 3; i++) {
+      currentColor[i] += (pondColor[i] - currentColor[i]) * 0.05;
+    }
+    gl.uniform1f(u_t,t); gl.uniform2f(u_r,cv.width,cv.height);
+    gl.uniform1f(u_ra,t-lastRip);
+    gl.uniform3f(u_col, currentColor[0], currentColor[1], currentColor[2]);
+    gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
 </script>
 </body>
 </html>
