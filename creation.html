@@ -328,33 +328,37 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
 }
 
 /* ============ 3D OVERLAY (sits on top of center item when work has GLB) ============ */
+/* Strategy: full-viewport canvas (so model never gets cropped), but z-index
+   sits BELOW the UI controls (arrows, dots, info, corner) and ABOVE the ring items.
+   The canvas itself has transparent background; we use a centered loading text. */
 #three-overlay {
   position: fixed;
-  left: 50%;
-  top: 50%;
-  /* Bigger than the PNG center (~350px) so 3D model has breathing room, no crop */
-  width: 560px;
-  height: 560px;
-  margin-left: -280px;
-  margin-top: -280px;
-  z-index: 50;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  /* Above the ring's center item (z-index ~1500) but below UI (arrows 80 are fine since they're absolutely positioned outside the canvas's drawn region) */
+  z-index: 1600;
   pointer-events: none;
   opacity: 0;
   transition: opacity 350ms ease;
 }
-#three-overlay.active {
-  opacity: 1;
+#three-overlay.active { opacity: 1; }
+#three-overlay.active canvas {
   pointer-events: auto;
   cursor: grab;
 }
-#three-overlay.active:active { cursor: grabbing; }
-#three-overlay canvas { width: 100%; height: 100%; display: block; }
+#three-overlay.active canvas:active { cursor: grabbing; }
+#three-overlay canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 #three-loading {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.2em;
@@ -363,19 +367,21 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   pointer-events: none;
 }
 
-/* Hide the center PNG when 3D is showing for that item — prevents overlap */
+/* Hide the center PNG when 3D is showing for that item — prevents overlap.
+   Note: when overlay is full-viewport with z 1600, PNG ring is below anyway,
+   but keep the visual class for clean transition. */
 body.has-3d-active .item.is-center .item-art img,
 body.has-3d-active .item.is-center .item-art.placeholder {
   opacity: 0;
   transition: opacity 300ms ease;
 }
 body.has-3d-active .item.is-center .item-art::before {
-  /* keep the glow underneath, since 3D model is in front */
   opacity: 0.5;
 }
 
-@media (max-width: 768px) {
-  #three-overlay { width: 380px; height: 380px; margin-left: -190px; margin-top: -190px; }
+/* Make sure UI controls stay above the overlay canvas */
+.corner, .info, .series-dots, .controls, .hint {
+  z-index: 2000;
 }
 </style>
 </head>
@@ -750,10 +756,9 @@ function createViewer(gltf, series) {
   const h = overlay.clientHeight;
 
   const scene = new THREE.Scene();
-  // Wider FOV for less perspective distortion (closer to product photography feel)
-  const camera = new THREE.PerspectiveCamera(28, w / h, 0.01, 100);
-  camera.position.set(0.6, 0.4, 3.6);
-  camera.lookAt(0, 0, 0);
+  // FOV chosen for product-shot feel (slight perspective, not flat ortho)
+  const FOV = 28;
+  const camera = new THREE.PerspectiveCamera(FOV, w / h, 0.01, 100);
 
   const canvas = document.createElement('canvas');
   overlay.appendChild(canvas);
@@ -816,8 +821,23 @@ function createViewer(gltf, series) {
   const maxDim = Math.max(size.x, size.y, size.z);
 
   model.position.sub(center);
-  holder.scale.setScalar(2.07 / maxDim);
+  // Normalize model to 1.0 unit max dim, then scale up
+  const normalScale = 1.0 / maxDim;
+  holder.scale.setScalar(normalScale);
   holder.add(model);
+
+  // Dynamic camera distance: keep visual size ~constant across viewport sizes.
+  // Target: model max dim should occupy ~440px on screen (matches original PNG center size + 15%)
+  const targetPx = Math.min(440, h * 0.55, w * 0.4);
+  const modelWorldSize = 1.0; // after normalization
+  const fovRad = FOV * Math.PI / 180;
+  // For a vertical FOV: visible height at distance d = 2 * d * tan(FOV/2)
+  // We want: targetPx / canvas_height = modelWorldSize / visibleHeight
+  // => d = modelWorldSize * canvas_height / (2 * tan(FOV/2) * targetPx)
+  const camDist = (modelWorldSize * h) / (2 * Math.tan(fovRad / 2) * targetPx);
+  // Position camera at angled product-shot perspective
+  camera.position.set(camDist * 0.15, camDist * 0.1, camDist);
+  camera.lookAt(0, 0, 0);
 
   // Enable shadows on mesh + tighten materials for nicer PBR
   model.traverse(o => {
@@ -836,7 +856,9 @@ function createViewer(gltf, series) {
   });
 
   // Contact shadow: a soft round shadow blob on the ground plane
-  const shadowGeom = new THREE.CircleGeometry(0.9, 64);
+  // Model bottom is at -0.5 in world space (1 unit total, centered)
+  const groundY = -0.55;
+  const shadowGeom = new THREE.CircleGeometry(0.45, 64);
   const shadowMat = new THREE.MeshBasicMaterial({
     color: 0x000000,
     transparent: true,
@@ -845,16 +867,14 @@ function createViewer(gltf, series) {
   });
   const shadowMesh = new THREE.Mesh(shadowGeom, shadowMat);
   shadowMesh.rotation.x = -Math.PI / 2;
-  shadowMesh.position.y = -1.0;
-  // Soft radial falloff via shader-like alpha map would be ideal; fake it with vertex colors
-  // Instead, layer two shadows for fake softness
+  shadowMesh.position.y = groundY;
   scene.add(shadowMesh);
   const shadowSoft = new THREE.Mesh(
-    new THREE.CircleGeometry(1.4, 64),
+    new THREE.CircleGeometry(0.7, 64),
     new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.14, depthWrite: false })
   );
   shadowSoft.rotation.x = -Math.PI / 2;
-  shadowSoft.position.y = -1.0;
+  shadowSoft.position.y = groundY;
   scene.add(shadowSoft);
 
   // Interaction
@@ -886,6 +906,20 @@ function createViewer(gltf, series) {
   window.addEventListener('touchmove', onMove, { passive: true });
   window.addEventListener('touchend', onUp);
 
+  function onResize() {
+    const nw = overlay.clientWidth;
+    const nh = overlay.clientHeight;
+    camera.aspect = nw / nh;
+    // Recompute distance to maintain visual size
+    const newTarget = Math.min(440, nh * 0.55, nw * 0.4);
+    const newDist = (1.0 * nh) / (2 * Math.tan(fovRad / 2) * newTarget);
+    camera.position.set(newDist * 0.15, newDist * 0.1, newDist);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+    renderer.setSize(nw, nh);
+  }
+  window.addEventListener('resize', onResize);
+
   let frameId = null;
   let alive = true;
   function animate() {
@@ -895,13 +929,13 @@ function createViewer(gltf, series) {
       holder.rotation.y += 0.005;
     }
     const t = performance.now() * 0.001;
-    const floatY = Math.sin(t * 0.8) * 0.06;
+    const floatY = Math.sin(t * 0.8) * 0.025;
     holder.position.y = floatY;
     // shadow shrinks/grows with float to feel attached
-    const shadowScale = 1.0 - floatY * 0.6;
+    const shadowScale = 1.0 - floatY * 1.5;
     shadowMesh.scale.set(shadowScale, shadowScale, 1);
     shadowSoft.scale.set(shadowScale, shadowScale, 1);
-    shadowMat.opacity = 0.32 - floatY * 0.4;
+    shadowMat.opacity = 0.32 - floatY * 1.0;
     renderer.render(scene, camera);
   }
   animate();
@@ -916,6 +950,7 @@ function createViewer(gltf, series) {
       canvas.removeEventListener('touchstart', onDown);
       window.removeEventListener('touchmove', onMove);
       window.removeEventListener('touchend', onUp);
+      window.removeEventListener('resize', onResize);
       renderer.dispose();
       pmrem.dispose();
       canvas.remove();
