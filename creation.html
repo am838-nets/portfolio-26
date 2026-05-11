@@ -129,6 +129,16 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   opacity: 1;
 }
 
+.item-art.has-3d {
+  cursor: grab;
+}
+.item-art.has-3d:active {
+  cursor: grabbing;
+}
+.item-art.has-3d canvas {
+  pointer-events: auto;
+}
+
 .item-art.placeholder {
   width: 60%; height: 78%;
   background: radial-gradient(ellipse at center, rgba(255,245,220,0.06), rgba(255,245,220,0.01));
@@ -357,7 +367,18 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
 
 <div class="hint"><kbd>←</kbd> <kbd>→</kbd> Navigate · Drag to rotate</div>
 
-<script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
 const T = {
   "magic_duck": "creations/magic_duck.png",
   "magic_duck2": "creations/magic_duck2.png",
@@ -380,7 +401,7 @@ const items = [
   { id:'07', name:'Cats Tower — Stack', series:'duck', client:'Banqiao Duck Park · 2024', img:'cats' },
   { id:'08', name:'Mushroom Trio', series:'duck', client:'Banqiao Duck Park · 2024', img:'mushroom' },
   { id:'09', name:'Tree Forest — Heart Arch', series:'duck', client:'Banqiao Duck Park · 2024', img:'trees' },
-  { id:'10', name:'Book Set — Letters', series:'duck', client:'Banqiao Duck Park · 2024', img:'books' },
+  { id:'10', name:'Book Set — Letters', series:'duck', client:'Banqiao Duck Park · 2024', img:'books', glb:'creations/book.glb' },
   { id:'11', name:'Broom Collection', series:'duck', client:'Banqiao Duck Park · 2024', img:'broom' },
   { id:'12', name:'Coming Soon', series:null, client:'Future · TBD', img:null },
 ];
@@ -420,6 +441,185 @@ const itemEls = items.map((it, i) => {
   return div;
 });
 
+/* ============ THREE.JS GLB MANAGER ============ */
+
+const GLBManager = (() => {
+  const glbCache = new Map();
+  let currentViewer = null;
+  let currentIdx = -1;
+
+  function loadGLB(url) {
+    if (glbCache.has(url)) return Promise.resolve(glbCache.get(url));
+    return new Promise((resolve, reject) => {
+      const loader = new GLTFLoader();
+      loader.load(url, (gltf) => {
+        glbCache.set(url, gltf);
+        resolve(gltf);
+      }, undefined, reject);
+    });
+  }
+
+  function createViewer(container, gltf) {
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(35, w / h, 0.01, 100);
+    camera.position.set(0.4, 0.3, 3.2);
+    camera.lookAt(0, 0, 0);
+
+    const canvas = document.createElement('canvas');
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.display = 'block';
+    container.appendChild(canvas);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(w, h);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+
+    // PMREM environment for nice PBR reflections
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+    // 3-point lighting matching Rhino studio render feel
+    const key = new THREE.DirectionalLight(0xffe8c8, 2.5);
+    key.position.set(3, 5, 4);
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0xb8d4ff, 1.0);
+    fill.position.set(-3, 1, -1);
+    scene.add(fill);
+    const rim = new THREE.DirectionalLight(0xffd0a0, 1.5);
+    rim.position.set(-1, 2, -3);
+    scene.add(rim);
+    // Warm uplight from pond direction
+    const pondUp = new THREE.PointLight(0xff9858, 1.0, 6, 1.5);
+    pondUp.position.set(0, -1.5, 0.5);
+    scene.add(pondUp);
+
+    const holder = new THREE.Group();
+    scene.add(holder);
+
+    const model = gltf.scene.clone(true);
+    const bbox = new THREE.Box3().setFromObject(model);
+    const center = bbox.getCenter(new THREE.Vector3());
+    const size = bbox.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+
+    model.position.sub(center);
+    holder.scale.setScalar(1.8 / maxDim);
+    holder.add(model);
+
+    model.traverse(o => {
+      if (o.isMesh && o.material) {
+        const m = o.material;
+        m.side = THREE.DoubleSide;
+        m.roughness = m.roughness !== undefined ? Math.max(m.roughness, 0.6) : 0.75;
+        m.metalness = 0.0;
+        if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+        m.needsUpdate = true;
+      }
+    });
+
+    // Interaction
+    let dragging = false, lastInteraction = performance.now();
+    let dragStartX = 0, dragStartY = 0, dragStartRotX = 0, dragStartRotY = 0;
+
+    function onDown(e) {
+      const pt = e.touches ? e.touches[0] : e;
+      dragging = true;
+      dragStartX = pt.clientX; dragStartY = pt.clientY;
+      dragStartRotX = holder.rotation.x;
+      dragStartRotY = holder.rotation.y;
+      lastInteraction = performance.now();
+      e.stopPropagation();
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      const pt = e.touches ? e.touches[0] : e;
+      holder.rotation.y = dragStartRotY + (pt.clientX - dragStartX) * 0.01;
+      holder.rotation.x = Math.max(-1, Math.min(1, dragStartRotX + (pt.clientY - dragStartY) * 0.01));
+      lastInteraction = performance.now();
+    }
+    function onUp() { dragging = false; lastInteraction = performance.now(); }
+
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    canvas.addEventListener('touchstart', onDown, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onUp);
+
+    let frameId = null;
+    function animate() {
+      frameId = requestAnimationFrame(animate);
+      if (!dragging && performance.now() - lastInteraction > 1500) {
+        holder.rotation.y += 0.005;
+      }
+      const t = performance.now() * 0.001;
+      holder.position.y = Math.sin(t * 0.8) * 0.06;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    return {
+      destroy() {
+        if (frameId) cancelAnimationFrame(frameId);
+        canvas.removeEventListener('mousedown', onDown);
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        canvas.removeEventListener('touchstart', onDown);
+        window.removeEventListener('touchmove', onMove);
+        window.removeEventListener('touchend', onUp);
+        renderer.dispose();
+        pmrem.dispose();
+        canvas.remove();
+      }
+    };
+  }
+
+  return {
+    async handleCenterChange(newIdx, oldIdx) {
+      // Tear down old viewer
+      if (currentViewer) {
+        currentViewer.destroy();
+        currentViewer = null;
+        // Restore old img if applicable
+        if (oldIdx >= 0 && items[oldIdx] && items[oldIdx].glb) {
+          const oldEl = itemEls[oldIdx];
+          const art = oldEl.querySelector('.item-art');
+          if (art && items[oldIdx].img && T[items[oldIdx].img]) {
+            art.innerHTML = `<img src="${T[items[oldIdx].img]}" alt="${items[oldIdx].name}">`;
+          }
+        }
+      }
+
+      const item = items[newIdx];
+      if (!item.glb) return;
+
+      const el = itemEls[newIdx];
+      const art = el.querySelector('.item-art');
+      if (!art) return;
+
+      try {
+        const gltf = await loadGLB(item.glb);
+        // Double-check we're still on this item (user may have moved away during async load)
+        if (centerIdx !== newIdx) return;
+        // Swap content: remove img, install 3D viewer
+        art.innerHTML = '';
+        art.classList.add('has-3d');
+        currentViewer = createViewer(art, gltf);
+        currentIdx = newIdx;
+      } catch (err) {
+        console.error('GLB load failed:', err);
+      }
+    }
+  };
+})();
+
 function layout() {
   items.forEach((it, i) => {
     let rel = i - centerIdx;
@@ -452,6 +652,11 @@ function layout() {
     else if (absR < 3.5) el.classList.add('is-back');
     else el.classList.add('is-far');
   });
+
+  // GLB manager: switch center thumbnail to 3D viewer if item has glb
+  if (centerIdx !== prevCenter) {
+    GLBManager.handleCenterChange(centerIdx, prevCenter);
+  }
 
   const it = items[centerIdx];
   const info = document.getElementById('info');
