@@ -377,6 +377,7 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const T = {
@@ -393,7 +394,7 @@ const T = {
 
 const items = [
   { id:'01', name:'Otter — Aroma Stone', series:'zoo', client:'Taipei Zoo · 2025', img:null },
-  { id:'02', name:'UFO — Public Installation', series:'ufo', client:'Xizhi Stellar Park · 2024', img:null },
+  { id:'02', name:'UFO — Public Installation', series:'ufo', client:'Xizhi Stellar Park · 2024', img:null, glb:'creations/ufo.glb' },
   { id:'03', name:'Magic Duck I — Sculpture', series:'duck', client:'Banqiao Duck Park · 2024', img:'magic_duck' },
   { id:'04', name:'Magic Duck II — Sculpture', series:'duck', client:'Banqiao Duck Park · 2024', img:'magic_duck2' },
   { id:'05', name:'Pumpkin I — Heart Weave', series:'duck', client:'Banqiao Duck Park · 2024', img:'pumkin' },
@@ -452,6 +453,9 @@ const GLBManager = (() => {
     if (glbCache.has(url)) return Promise.resolve(glbCache.get(url));
     return new Promise((resolve, reject) => {
       const loader = new GLTFLoader();
+      const draco = new DRACOLoader();
+      draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/');
+      loader.setDRACOLoader(draco);
       loader.load(url, (gltf) => {
         glbCache.set(url, gltf);
         resolve(gltf);
@@ -459,7 +463,7 @@ const GLBManager = (() => {
     });
   }
 
-  function createViewer(container, gltf) {
+  function createViewer(container, gltf, series) {
     const w = container.clientWidth;
     const h = container.clientHeight;
 
@@ -495,8 +499,14 @@ const GLBManager = (() => {
     const rim = new THREE.DirectionalLight(0xffd0a0, 1.5);
     rim.position.set(-1, 2, -3);
     scene.add(rim);
-    // Warm uplight from pond direction
-    const pondUp = new THREE.PointLight(0xff9858, 1.0, 6, 1.5);
+    // Warm uplight from pond direction — color matches series
+    const seriesColors = {
+      duck: 0xff9858,   // orange
+      ufo:  0x4ec0ff,   // fluorescent blue
+      zoo:  0xf1a5c8,   // pink
+    };
+    const upColor = seriesColors[series] || 0xff9858;
+    const pondUp = new THREE.PointLight(upColor, 1.0, 6, 1.5);
     pondUp.position.set(0, -1.5, 0.5);
     scene.add(pondUp);
 
@@ -510,7 +520,7 @@ const GLBManager = (() => {
     const maxDim = Math.max(size.x, size.y, size.z);
 
     model.position.sub(center);
-    holder.scale.setScalar(1.8 / maxDim);
+    holder.scale.setScalar(2.07 / maxDim);  // was 1.8, +15%
     holder.add(model);
 
     model.traverse(o => {
@@ -587,12 +597,21 @@ const GLBManager = (() => {
       if (currentViewer) {
         currentViewer.destroy();
         currentViewer = null;
-        // Restore old img if applicable
+        // Restore old art content
         if (oldIdx >= 0 && items[oldIdx] && items[oldIdx].glb) {
           const oldEl = itemEls[oldIdx];
           const art = oldEl.querySelector('.item-art');
-          if (art && items[oldIdx].img && T[items[oldIdx].img]) {
-            art.innerHTML = `<img src="${T[items[oldIdx].img]}" alt="${items[oldIdx].name}">`;
+          if (art) {
+            art.classList.remove('has-3d');
+            const oldItem = items[oldIdx];
+            if (oldItem.img && T[oldItem.img]) {
+              art.innerHTML = `<img src="${T[oldItem.img]}" alt="${oldItem.name}">`;
+            } else {
+              // No PNG — show placeholder
+              const lbl = oldItem.name.split('—')[0].trim() + '<br><span style="opacity:.5">圖待補</span>';
+              art.innerHTML = lbl;
+              art.classList.add('placeholder');
+            }
           }
         }
       }
@@ -608,10 +627,11 @@ const GLBManager = (() => {
         const gltf = await loadGLB(item.glb);
         // Double-check we're still on this item (user may have moved away during async load)
         if (centerIdx !== newIdx) return;
-        // Swap content: remove img, install 3D viewer
+        // Swap content: remove img/placeholder, install 3D viewer
         art.innerHTML = '';
+        art.classList.remove('placeholder');
         art.classList.add('has-3d');
-        currentViewer = createViewer(art, gltf);
+        currentViewer = createViewer(art, gltf, item.series);
         currentIdx = newIdx;
       } catch (err) {
         console.error('GLB load failed:', err);
