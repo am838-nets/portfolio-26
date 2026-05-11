@@ -332,10 +332,11 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   position: fixed;
   left: 50%;
   top: 50%;
-  width: 320px;
-  height: 320px;
-  margin-left: -160px;
-  margin-top: -160px;
+  /* Bigger than the PNG center (~350px) so 3D model has breathing room, no crop */
+  width: 560px;
+  height: 560px;
+  margin-left: -280px;
+  margin-top: -280px;
   z-index: 50;
   pointer-events: none;
   opacity: 0;
@@ -361,8 +362,20 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   text-transform: uppercase;
   pointer-events: none;
 }
+
+/* Hide the center PNG when 3D is showing for that item — prevents overlap */
+body.has-3d-active .item.is-center .item-art img,
+body.has-3d-active .item.is-center .item-art.placeholder {
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+body.has-3d-active .item.is-center .item-art::before {
+  /* keep the glow underneath, since 3D model is in front */
+  opacity: 0.5;
+}
+
 @media (max-width: 768px) {
-  #three-overlay { width: 230px; height: 230px; margin-left: -115px; margin-top: -115px; }
+  #three-overlay { width: 380px; height: 380px; margin-left: -190px; margin-top: -190px; }
 }
 </style>
 </head>
@@ -737,36 +750,61 @@ function createViewer(gltf, series) {
   const h = overlay.clientHeight;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(35, w / h, 0.01, 100);
-  camera.position.set(0.5, 0.3, 3.2);
+  // Wider FOV for less perspective distortion (closer to product photography feel)
+  const camera = new THREE.PerspectiveCamera(28, w / h, 0.01, 100);
+  camera.position.set(0.6, 0.4, 3.6);
   camera.lookAt(0, 0, 0);
 
   const canvas = document.createElement('canvas');
   overlay.appendChild(canvas);
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({
+    canvas, antialias: true, alpha: true,
+    powerPreference: 'high-performance'
+  });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(w, h);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 1.15;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  // PMREM environment — soft studio reflections
+  // PMREM environment — soft studio reflections (stronger than before for PBR pop)
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  pmrem.compileEquirectangularShader();
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.025).texture;
 
-  // 3-point lighting
-  const key = new THREE.DirectionalLight(0xffe8c8, 2.5);
-  key.position.set(3, 5, 4); scene.add(key);
-  const fill = new THREE.DirectionalLight(0xb8d4ff, 1.0);
-  fill.position.set(-3, 1, -1); scene.add(fill);
-  const rim = new THREE.DirectionalLight(0xffd0a0, 1.5);
-  rim.position.set(-1, 2, -3); scene.add(rim);
+  // 3-point cinematic lighting — brighter, more direction
+  const key = new THREE.DirectionalLight(0xfff0d8, 3.5);
+  key.position.set(2.5, 4, 3);
+  key.castShadow = true;
+  key.shadow.mapSize.width = 1024;
+  key.shadow.mapSize.height = 1024;
+  key.shadow.camera.near = 0.1;
+  key.shadow.camera.far = 10;
+  key.shadow.camera.left = -2;
+  key.shadow.camera.right = 2;
+  key.shadow.camera.top = 2;
+  key.shadow.camera.bottom = -2;
+  key.shadow.bias = -0.0005;
+  key.shadow.radius = 4;
+  scene.add(key);
 
-  // Series-colored pond uplight
+  const fill = new THREE.DirectionalLight(0xc0d8ff, 1.2);
+  fill.position.set(-2.5, 1, -0.5); scene.add(fill);
+
+  const rim = new THREE.DirectionalLight(0xffe0b0, 2.0);
+  rim.position.set(-1, 2.5, -2.5); scene.add(rim);
+
+  // Ambient lift so dark sides don't crush
+  const amb = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(amb);
+
+  // Series-colored pond uplight (subtle)
   const upColor = SERIES_COLORS[series] || 0xff9858;
-  const pondUp = new THREE.PointLight(upColor, 1.0, 6, 1.5);
-  pondUp.position.set(0, -1.5, 0.5); scene.add(pondUp);
+  const pondUp = new THREE.PointLight(upColor, 0.8, 5, 1.8);
+  pondUp.position.set(0, -1.3, 0.6); scene.add(pondUp);
 
   const holder = new THREE.Group();
   scene.add(holder);
@@ -778,17 +816,46 @@ function createViewer(gltf, series) {
   const maxDim = Math.max(size.x, size.y, size.z);
 
   model.position.sub(center);
-  holder.scale.setScalar(2.07 / maxDim);  // matches PNG center scale (1.25x base, +15% scaling)
+  holder.scale.setScalar(2.07 / maxDim);
   holder.add(model);
 
+  // Enable shadows on mesh + tighten materials for nicer PBR
   model.traverse(o => {
-    if (o.isMesh && o.material) {
-      const m = o.material;
-      m.side = THREE.DoubleSide;
-      if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
-      m.needsUpdate = true;
+    if (o.isMesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+      if (o.material) {
+        const m = o.material;
+        m.side = THREE.DoubleSide;
+        if (m.map) m.map.colorSpace = THREE.SRGBColorSpace;
+        // Force envMap intensity higher so PBR reflections show
+        m.envMapIntensity = 1.2;
+        m.needsUpdate = true;
+      }
     }
   });
+
+  // Contact shadow: a soft round shadow blob on the ground plane
+  const shadowGeom = new THREE.CircleGeometry(0.9, 64);
+  const shadowMat = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.32,
+    depthWrite: false,
+  });
+  const shadowMesh = new THREE.Mesh(shadowGeom, shadowMat);
+  shadowMesh.rotation.x = -Math.PI / 2;
+  shadowMesh.position.y = -1.0;
+  // Soft radial falloff via shader-like alpha map would be ideal; fake it with vertex colors
+  // Instead, layer two shadows for fake softness
+  scene.add(shadowMesh);
+  const shadowSoft = new THREE.Mesh(
+    new THREE.CircleGeometry(1.4, 64),
+    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.14, depthWrite: false })
+  );
+  shadowSoft.rotation.x = -Math.PI / 2;
+  shadowSoft.position.y = -1.0;
+  scene.add(shadowSoft);
 
   // Interaction
   let dragging = false, lastInteraction = performance.now();
@@ -807,7 +874,7 @@ function createViewer(gltf, series) {
     if (!dragging) return;
     const pt = e.touches ? e.touches[0] : e;
     holder.rotation.y = dragStartRotY + (pt.clientX - dragStartX) * 0.01;
-    holder.rotation.x = Math.max(-1, Math.min(1, dragStartRotX + (pt.clientY - dragStartY) * 0.01));
+    holder.rotation.x = Math.max(-0.8, Math.min(0.8, dragStartRotX + (pt.clientY - dragStartY) * 0.01));
     lastInteraction = performance.now();
   }
   function onUp() { dragging = false; lastInteraction = performance.now(); }
@@ -828,7 +895,13 @@ function createViewer(gltf, series) {
       holder.rotation.y += 0.005;
     }
     const t = performance.now() * 0.001;
-    holder.position.y = Math.sin(t * 0.8) * 0.06;
+    const floatY = Math.sin(t * 0.8) * 0.06;
+    holder.position.y = floatY;
+    // shadow shrinks/grows with float to feel attached
+    const shadowScale = 1.0 - floatY * 0.6;
+    shadowMesh.scale.set(shadowScale, shadowScale, 1);
+    shadowSoft.scale.set(shadowScale, shadowScale, 1);
+    shadowMat.opacity = 0.32 - floatY * 0.4;
     renderer.render(scene, camera);
   }
   animate();
@@ -858,6 +931,7 @@ async function handleCenterChange(item) {
     currentGlbUrl = null;
   }
   overlay.classList.remove('active');
+  document.body.classList.remove('has-3d-active');
 
   if (!item || !item.glb) return;
 
@@ -873,6 +947,8 @@ async function handleCenterChange(item) {
     if (currentGlbUrl !== glbUrl) return;
     loadingEl.style.display = 'none';
     currentViewer = createViewer(gltf, item.series);
+    // Now that 3D is rendering, hide the PNG behind it
+    document.body.classList.add('has-3d-active');
   } catch (err) {
     console.error('GLB load failed for', glbUrl, err);
     loadingEl.textContent = '3D unavailable';
