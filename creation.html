@@ -382,8 +382,8 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
 
 #three-close {
   position: fixed;
-  top: 28px;
-  left: 25vw;
+  top: 64px;
+  left: 75vw;
   transform: translateX(-50%);
   width: 44px;
   height: 44px;
@@ -451,7 +451,7 @@ body.has-3d-active .item.is-center .item-art.placeholder {
 }
 
 @media (max-width: 768px) {
-  #three-close { top: 18px; left: 28px; transform: none; width: 40px; height: 40px; font-size: 20px; }
+  #three-close { top: 28px; right: 28px; left: auto; transform: none; width: 40px; height: 40px; font-size: 20px; }
   #three-close::after { display: none; }
   #three-close:hover { transform: scale(1.06); }
   #three-close:active { transform: scale(0.94); }
@@ -639,6 +639,7 @@ document.getElementById('next').addEventListener('click', () => goTo((centerIdx+
 document.getElementById('prev').addEventListener('click', () => goTo((centerIdx-1+N) % N));
 
 window.addEventListener('keydown', (e) => {
+  if (document.body.classList.contains('has-3d-active')) return;  // 3D modal: ring nav locked
   if (e.key === 'ArrowLeft')  { e.preventDefault(); goTo((centerIdx-1+N) % N); }
   else if (e.key === 'ArrowRight') { e.preventDefault(); goTo((centerIdx+1) % N); }
   else if (e.key === 'Home') { goTo(0); }
@@ -647,8 +648,10 @@ window.addEventListener('keydown', (e) => {
 
 /* Drag to rotate */
 let isDragging = false, dragStartX = 0, dragStartIdx = 0;
-const DRAG_THRESHOLD = 70;
+const DRAG_THRESHOLD = 140;       // was 70 - require more horizontal travel per step
+const DRAG_DEAD_ZONE = 30;        // ignore very small jitters entirely
 window.addEventListener('mousedown', (e) => {
+  if (document.body.classList.contains('has-3d-active')) return;  // 3D modal: ring is locked
   if (e.target.closest('.arrow') || e.target.closest('a')) return;
   isDragging = true; dragStartX = e.clientX; dragStartIdx = centerIdx;
   document.body.style.cursor = 'grabbing';
@@ -656,18 +659,21 @@ window.addEventListener('mousedown', (e) => {
 window.addEventListener('mousemove', (e) => {
   if (!isDragging) return;
   const dx = e.clientX - dragStartX;
-  const newIdx = (dragStartIdx - Math.round(dx / DRAG_THRESHOLD) + N * 10) % N;
+  if (Math.abs(dx) < DRAG_DEAD_ZONE) return;
+  const newIdx = (dragStartIdx - Math.trunc(dx / DRAG_THRESHOLD) + N * 10) % N;
   if (newIdx !== centerIdx) { centerIdx = newIdx; layout(); }
 });
 window.addEventListener('mouseup', () => { isDragging = false; document.body.style.cursor = ''; });
 window.addEventListener('touchstart', (e) => {
+  if (document.body.classList.contains('has-3d-active')) return;
   if (e.target.closest('.arrow') || e.target.closest('a')) return;
   isDragging = true; dragStartX = e.touches[0].clientX; dragStartIdx = centerIdx;
 }, {passive: true});
 window.addEventListener('touchmove', (e) => {
   if (!isDragging) return;
   const dx = e.touches[0].clientX - dragStartX;
-  const newIdx = (dragStartIdx - Math.round(dx / DRAG_THRESHOLD) + N * 10) % N;
+  if (Math.abs(dx) < DRAG_DEAD_ZONE) return;
+  const newIdx = (dragStartIdx - Math.trunc(dx / DRAG_THRESHOLD) + N * 10) % N;
   if (newIdx !== centerIdx) { centerIdx = newIdx; layout(); }
 }, {passive: true});
 window.addEventListener('touchend', () => { isDragging = false; });
