@@ -327,7 +327,23 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   .series-dots { bottom: 90px; }
 }
 
-/* ============ 3D OVERLAY (model-viewer + close button) ============ */
+/* ============ 3D MODAL LAYER (proper modal with backdrop, no accidental dismiss) ============ */
+#three-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,5,5,0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 1500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 350ms ease;
+}
+#three-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 #three-overlay {
   position: fixed;
   left: 0;
@@ -363,17 +379,20 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   pointer-events: none;
   z-index: 2;
 }
+
 #three-close {
-  position: absolute;
+  position: fixed;
   top: 28px;
-  right: 32px;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--ink-mute);
+  left: 25vw;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--ink-dim);
   border-radius: 50%;
-  background: rgba(5,5,5,0.55);
+  background: rgba(5,5,5,0.65);
   backdrop-filter: blur(8px);
-  color: var(--ink-dim);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--ink);
   font-size: 22px;
   font-weight: 300;
   line-height: 1;
@@ -385,34 +404,57 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   transition: all .25s;
   font-family: var(--font-sans);
   pointer-events: auto;
-  z-index: 3;
+  z-index: 2200;
+}
+#three-close::after {
+  content: 'CLOSE';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  pointer-events: none;
 }
 #three-close:hover {
   border-color: var(--ink);
   color: var(--ink);
-  box-shadow: 0 0 14px rgba(255,245,220,0.18);
-  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(255,245,220,0.25);
+  transform: translateX(-50%) scale(1.06);
 }
-#three-close:active { transform: scale(0.94); }
+#three-close:active { transform: translateX(-50%) scale(0.94); }
 #three-overlay.active #three-close { display: flex; }
 
-/* Hide the center PNG when 3D is showing for that item — prevents overlap */
+body.has-3d-active .stage,
+body.has-3d-active .pond-wrap,
+body.has-3d-active .pond-glow,
+body.has-3d-active .info,
+body.has-3d-active .corner,
+body.has-3d-active .series-dots,
+body.has-3d-active .controls,
+body.has-3d-active .hint {
+  filter: brightness(0.5);
+  transition: filter 350ms ease;
+}
 body.has-3d-active .item.is-center .item-art img,
 body.has-3d-active .item.is-center .item-art.placeholder {
   opacity: 0;
   transition: opacity 300ms ease;
 }
-body.has-3d-active .item.is-center .item-art::before {
-  opacity: 0.5;
-}
 
-/* Make sure UI controls stay above the overlay canvas */
 .corner, .info, .series-dots, .controls, .hint {
   z-index: 2000;
 }
 
 @media (max-width: 768px) {
-  #three-close { top: 18px; right: 18px; width: 36px; height: 36px; font-size: 20px; }
+  #three-close { top: 18px; left: 28px; transform: none; width: 40px; height: 40px; font-size: 20px; }
+  #three-close::after { display: none; }
+  #three-close:hover { transform: scale(1.06); }
+  #three-close:active { transform: scale(0.94); }
 }
 </style>
 </head>
@@ -429,6 +471,7 @@ body.has-3d-active .item.is-center .item-art::before {
 
 <div class="stage"><div class="ring" id="ring"></div></div>
 
+<div id="three-backdrop"></div>
 <div id="three-overlay">
   <div id="three-loading">Loading 3D…</div>
   <button id="three-close" aria-label="Close 3D view">×</button>
@@ -448,7 +491,7 @@ body.has-3d-active .item.is-center .item-art::before {
   <div class="arrow" id="next">›</div>
 </div>
 
-<div class="hint"><kbd>←</kbd> <kbd>→</kbd> Navigate · Drag to rotate · Double-click for 3D</div>
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> Navigate · Drag to rotate</div>
 
 <script>
 const T = {
@@ -478,7 +521,6 @@ const items = [
   { id:'11', name:'Broom Collection', series:'duck', client:'Banqiao Duck Park · 2024', img:'broom' },
   { id:'12', name:'Coming Soon', series:null, client:'Future · TBD', img:null },
 ];
-window.__items = items;  // expose for 3D module double-click handler
 
 const seriesMap = {
   zoo:  { label:'PRODUCT DEVELOPMENT', color:'rgba(241,165,200,1)', pond:[0.95, 0.65, 0.82], glow:'rgba(241,165,200,0.28)' },   // pink
@@ -743,13 +785,13 @@ if (gl) {
 <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
 <script>
 (function () {
+  const backdrop = document.getElementById('three-backdrop');
   const overlay = document.getElementById('three-overlay');
   const loadingEl = document.getElementById('three-loading');
   const closeBtn = document.getElementById('three-close');
 
   let currentMv = null;
   let currentGlbUrl = null;
-  let auto3dEnabled = true;  // toggled off by X button, re-enabled by double-click on center
 
   function tearDown() {
     if (currentMv) {
@@ -757,6 +799,7 @@ if (gl) {
       currentMv = null;
     }
     currentGlbUrl = null;
+    backdrop.classList.remove('active');
     overlay.classList.remove('active');
     document.body.classList.remove('has-3d-active');
     loadingEl.style.display = 'none';
@@ -802,50 +845,27 @@ if (gl) {
     tearDown();
     if (!item || !item.glb) return;
     currentGlbUrl = item.glb;
+    backdrop.classList.add('active');
     overlay.classList.add('active');
     currentMv = buildModelViewer(item);
     overlay.insertBefore(currentMv, loadingEl);
   }
 
-  function handleCenterChange(item) {
-    tearDown();
-    if (!auto3dEnabled) return;       // user closed 3D — don't auto-reload on next item
-    if (!item || !item.glb) return;
-    load3D(item);
-  }
-
-  // X button: close 3D + disable auto-3D until user explicitly re-opens
+  // X closes modal. Ring becomes interactive again. Coming back to the
+  // same item re-opens 3D naturally (centerchange only fires when centerIdx changes).
   if (closeBtn) {
     closeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      auto3dEnabled = false;
       tearDown();
     });
   }
 
-  // ESC also closes
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && currentMv) {
-      auto3dEnabled = false;
-      tearDown();
-    }
-  });
-
-  // Double-click on center item re-enables and loads 3D
-  window.addEventListener('dblclick', (e) => {
-    const centerEl = document.querySelector('.item.is-center');
-    if (!centerEl) return;
-    if (!centerEl.contains(e.target)) return;
-    // Find current item
-    const idx = parseInt(centerEl.dataset.idx);
-    const items = window.__items;
-    if (!items || !items[idx] || !items[idx].glb) return;
-    auto3dEnabled = true;
-    load3D(items[idx]);
+    if (e.key === 'Escape' && currentMv) tearDown();
   });
 
   window.addEventListener('centerchange', (e) => {
-    handleCenterChange(e.detail.item);
+    load3D(e.detail.item);
   });
 })();
 </script>
