@@ -462,35 +462,31 @@ body.has-3d-active .item.is-center .item-art.placeholder {
   position: fixed;
   pointer-events: none;
   z-index: 2500;
-  background: rgba(245,243,236,0.96);
-  color: rgba(20,20,18,0.92);
-  font-family: var(--font-sans);
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  padding: 6px 10px;
-  border-radius: 3px;
-  white-space: nowrap;
   opacity: 0;
-  transform: translate(14px, 14px);
-  transition: opacity 220ms ease;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  transform: translate(16px, 16px);
+  transition: opacity 280ms ease;
   user-select: none;
+  white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
 }
-#click-hint.visible {
-  opacity: 1;
-}
+#click-hint.visible { opacity: 1; }
 #click-hint .zh {
-  font-weight: 500;
+  font-family: var(--font-tc);
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  color: var(--ink);
+  font-weight: 400;
 }
 #click-hint .en {
-  margin-left: 6px;
-  opacity: 0.55;
-  font-size: 10px;
-  letter-spacing: 0.04em;
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
 }
-body.has-3d-active #click-hint {
-  display: none;
-}
+body.has-3d-active #click-hint { display: none; }
 
 </style>
 </head>
