@@ -6,255 +6,780 @@
 <title>Design — 鄭乃慈 Nai Tzu Cheng</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@200;300;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=JetBrains+Mono:wght@300;400;500&family=Noto+Sans+TC:wght@200;300;400;500&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{
-    width:100%;height:100%;overflow:hidden;
-    background:#000;color:#fff;
-    font-family:'Inter','Noto Sans TC',sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  #scene{position:fixed;inset:0;z-index:1;display:block;}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #f5f3ec;
+  --ink-dim: rgba(245,243,236,0.55);
+  --ink-mute: rgba(245,243,236,0.3);
+  --accent: rgba(180,200,220,1);   /* cool muted slate-blue for design series */
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-tc: 'Noto Sans TC', sans-serif;
+}
+html, body {
+  height: 100%; width: 100%;
+  background: #050505;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
 
-  .corner-tl{position:fixed;top:56px;left:60px;z-index:20;line-height:1.35;}
-  .corner-tl a{text-decoration:none;color:inherit;display:block;}
-  .corner-tl .name-zh{font-size:16px;font-weight:500;letter-spacing:0.12em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,0.6);}
-  .corner-tl .name-en{font-family:'JetBrains Mono',monospace;font-size:9px;color:#ddd;letter-spacing:0.28em;margin-top:5px;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
+/* ============ CORNER UI (matches creation.html) ============ */
+.corner {
+  position: fixed;
+  z-index: 100;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+.corner a { color: inherit; text-decoration: none; transition: color .25s; }
+.corner a:hover { color: var(--ink); }
+.tl { top: 28px; left: 32px; line-height: 1.6; }
+.tl .name-tc { font-family: var(--font-tc); font-size: 13px; letter-spacing: 0.15em; color: var(--ink); font-weight: 400; text-transform: none; display: block; margin-bottom: 2px; }
+.tl .name-en { font-size: 10px; color: var(--ink-dim); }
+.tr { top: 28px; right: 32px; }
+.tr a { display: inline-flex; align-items: center; gap: 8px; }
+.tr a::before { content: '←'; opacity: 0.5; }
 
-  /* 中央 Coming Soon */
-  .center-text{
-    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-    z-index:18;text-align:center;pointer-events:none;
-  }
-  .center-text .label{
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;letter-spacing:0.45em;
-    color:#fff;text-transform:uppercase;
-    margin-bottom:24px;
-    text-shadow:
-      0 0 1px rgba(255,255,255,0.95),
-      0 0 3px rgba(255,255,255,0.85),
-      0 0 8px rgba(220,240,255,0.55),
-      0 0 16px rgba(180,220,255,0.35),
-      0 0 26px rgba(150,210,255,0.20);
-    animation: neonBreath 3.6s ease-in-out infinite;
-  }
-  .center-text .title{
-    font-family:'Inter','Noto Sans TC',sans-serif;
-    font-size:64px;font-weight:200;letter-spacing:0.08em;
-    color:#fff;text-transform:uppercase;
-    text-shadow:0 2px 20px rgba(0,0,0,0.5);
-    line-height:1;
-  }
-  .center-text .subtitle{
-    margin-top:20px;
-    font-family:'JetBrains Mono',monospace;
-    font-size:10px;letter-spacing:0.32em;
-    color:#bbb;text-transform:uppercase;
-    text-shadow:0 1px 4px rgba(0,0,0,0.6);
-  }
-  @keyframes neonBreath {
-    0%, 100% { filter: brightness(1); }
-    50%      { filter: brightness(1.12); }
-  }
+/* ============ STAGE LAYOUT ============ */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  perspective: 1400px;
+}
 
-  /* 返回首頁 */
-  .back-link{
-    position:fixed;top:56px;right:60px;z-index:20;
-    font-family:'JetBrains Mono',monospace;
-    font-size:10px;letter-spacing:0.28em;text-transform:uppercase;
-    color:#ddd;text-decoration:none;
-    text-shadow:
-      0 0 2px rgba(255,255,255,0.5),
-      0 0 8px rgba(220,240,255,0.3),
-      0 1px 4px rgba(0,0,0,0.6);
-    transition:color 0.3s ease, text-shadow 0.4s ease;
-  }
-  .back-link:hover{
-    color:#fff;
-    text-shadow:
-      0 0 2px rgba(255,255,255,1),
-      0 0 10px rgba(255,250,235,0.6),
-      0 0 20px rgba(255,240,210,0.35);
-  }
-  .back-link::before{ content:'← '; }
+/* Each project row: large jpg left, text right.
+   Stacked vertically; we slide them along Y via transform. */
+#projects {
+  position: relative;
+  width: min(86vw, 1280px);
+  max-width: 1280px;
+  height: 100%;
+}
+.project {
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 56px;
+  align-items: center;
+  transition: transform 800ms cubic-bezier(.2,.7,.2,1), opacity 600ms ease, filter 600ms ease;
+  pointer-events: none;
+}
+.project.is-current {
+  pointer-events: auto;
+}
+.project.is-current .pcard {
+  cursor: pointer;
+}
 
-  .corner-br{
-    position:fixed;bottom:56px;right:60px;z-index:20;
-    font-family:'JetBrains Mono',monospace;
-    font-size:10px;letter-spacing:0.22em;color:#bbb;text-transform:uppercase;
-    text-shadow:0 1px 4px rgba(0,0,0,0.6);
-  }
+/* Image card */
+.pcard {
+  aspect-ratio: 4 / 3;
+  background: #0a0a0a;
+  border: 1px solid rgba(245,243,236,0.06);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  position: relative;
+  transition: border-color .35s, box-shadow .35s, transform .5s;
+}
+.pcard img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 1s ease;
+}
+.pcard.placeholder {
+  background:
+    linear-gradient(135deg, rgba(245,243,236,0.04), rgba(245,243,236,0.01)),
+    radial-gradient(circle at 30% 30%, rgba(245,243,236,0.08), transparent 60%);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  text-align: center;
+  padding: 24px;
+  line-height: 1.8;
+}
+.project.is-current .pcard {
+  border-color: rgba(245,243,236,0.18);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,243,236,0.04);
+}
+.project.is-current .pcard:hover img {
+  transform: scale(1.025);
+}
 
-  @media (max-width:768px){
-    .corner-tl{top:32px;left:32px;}
-    .back-link{top:32px;right:32px;}
-    .corner-br{bottom:32px;right:32px;}
-    .center-text .title{font-size:42px;}
-    .center-text .label{font-size:10px;}
+/* Right text panel */
+.pmeta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding: 20px 8px;
+}
+.pmeta .id-line {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+}
+.pmeta .title-tc {
+  font-family: var(--font-tc);
+  font-size: 28px;
+  font-weight: 300;
+  line-height: 1.3;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+}
+.pmeta .title-en {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  margin-top: -8px;
+}
+.pmeta .specs {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 24px;
+  margin-top: 4px;
+  font-size: 12px;
+  align-items: baseline;
+}
+.pmeta .specs dt {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  padding-top: 3px;
+}
+.pmeta .specs dd {
+  font-family: var(--font-tc);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--ink-dim);
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+}
+.pmeta .specs dd.has-en {
+  font-family: var(--font-sans);
+}
+.pmeta .blurb {
+  font-family: var(--font-tc);
+  font-size: 13px;
+  line-height: 1.85;
+  font-weight: 300;
+  color: var(--ink-dim);
+  letter-spacing: 0.03em;
+  margin-top: 12px;
+  max-width: 480px;
+}
+.pmeta .cta {
+  margin-top: 18px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: color .25s;
+}
+.pmeta .cta::after {
+  content: '→';
+  display: inline-block;
+  transition: transform .35s;
+}
+.project.is-current .pcard:hover ~ .pmeta .cta,
+.pmeta:hover .cta {
+  color: var(--ink);
+}
+.project.is-current .pcard:hover ~ .pmeta .cta::after {
+  transform: translateX(6px);
+}
+
+/* ============ NON-CURRENT STATES ============ */
+.project.is-above {
+  transform: translate(0, calc(-50% - 110vh));
+  opacity: 0;
+}
+.project.is-below {
+  transform: translate(0, calc(-50% + 110vh));
+  opacity: 0;
+}
+.project.is-prev {
+  transform: translate(0, calc(-50% - 100vh));
+  opacity: 0.18;
+  filter: blur(2px);
+}
+.project.is-next {
+  transform: translate(0, calc(-50% + 100vh));
+  opacity: 0.18;
+  filter: blur(2px);
+}
+.project.is-current {
+  transform: translate(0, -50%);
+  opacity: 1;
+}
+
+/* ============ NAV ARROWS + COUNTER ============ */
+.nav-side {
+  position: fixed;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 60;
+  align-items: center;
+}
+.nav-arrow {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(245,243,236,0.22);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  background: rgba(5,5,5,0.4);
+  color: var(--ink-dim);
+  font-size: 13px;
+  transition: all .25s;
+  user-select: none;
+}
+.nav-arrow:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: rgba(245,243,236,0.05);
+}
+.nav-arrow:active { transform: scale(0.94); }
+.counter {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--ink-mute);
+  text-align: center;
+  line-height: 1.3;
+}
+.counter strong {
+  display: block;
+  color: var(--ink);
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+}
+
+/* ============ PROGRESS DOTS (left side) ============ */
+.dots {
+  position: fixed;
+  left: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 60;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(245,243,236,0.18);
+  cursor: pointer;
+  transition: all .35s;
+}
+.dot:hover { background: rgba(245,243,236,0.5); }
+.dot.active {
+  background: var(--ink);
+  transform: scale(1.5);
+  box-shadow: 0 0 12px rgba(245,243,236,0.4);
+}
+
+/* ============ HINT ============ */
+.hint {
+  position: fixed;
+  bottom: 18px;
+  right: 32px;
+  z-index: 80;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+}
+.hint kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid rgba(245,243,236,0.3);
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: 9px;
+  margin: 0 2px;
+}
+
+/* ============ DETAIL MODAL ============ */
+#detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,5,5,0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+#detail-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#detail-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.97);
+  width: min(92vw, 1320px);
+  height: min(88vh, 820px);
+  z-index: 1600;
+  background: #0a0a0a;
+  border: 1px solid rgba(245,243,236,0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms ease, transform 500ms cubic-bezier(.2,.7,.2,1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#detail-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+.detail-header {
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid rgba(245,243,236,0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-shrink: 0;
+}
+.detail-header .htxt h2 {
+  font-family: var(--font-tc);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+}
+.detail-header .htxt .en {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+#detail-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--ink-dim);
+  border-radius: 50%;
+  background: rgba(5,5,5,0.6);
+  color: var(--ink);
+  font-size: 18px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-family: var(--font-sans);
+  transition: all .25s;
+}
+#detail-close:hover {
+  border-color: var(--ink);
+  box-shadow: 0 0 14px rgba(245,243,236,0.2);
+}
+#detail-close:active { transform: scale(0.94); }
+
+.detail-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0;
+  overflow: hidden;
+}
+.detail-3d {
+  background: #050505;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.detail-3d model-viewer {
+  width: 100%;
+  height: 100%;
+  background-color: transparent;
+}
+.detail-3d .placeholder-msg {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  text-align: center;
+  padding: 24px;
+  line-height: 1.8;
+}
+.detail-renders {
+  background: #080808;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.detail-renders::-webkit-scrollbar { width: 6px; }
+.detail-renders::-webkit-scrollbar-track { background: transparent; }
+.detail-renders::-webkit-scrollbar-thumb { background: rgba(245,243,236,0.15); border-radius: 3px; }
+.detail-renders img {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #050505;
+  border: 1px solid rgba(245,243,236,0.04);
+}
+.detail-renders .ph {
+  width: 100%;
+  aspect-ratio: 4/3;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(135deg, rgba(245,243,236,0.03), rgba(245,243,236,0.005));
+  border: 1px dashed rgba(245,243,236,0.1);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+  .project {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 0 20px;
   }
+  .pcard { aspect-ratio: 16/10; }
+  .pmeta .title-tc { font-size: 20px; }
+  .nav-side, .dots { display: none; }
+  .corner.tl { top: 16px; left: 16px; }
+  .corner.tr { top: 16px; right: 16px; font-size: 9px; }
+  #detail-modal { width: 96vw; height: 92vh; }
+  .detail-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+}
 </style>
 </head>
 <body>
 
-<canvas id="scene"></canvas>
+<div class="corner tl">
+  <a href="index.html">
+    <span class="name-tc">鄭乃慈</span>
+    <span class="name-en">NAI TZU CHENG · DESIGN</span>
+  </a>
+</div>
+<div class="corner tr"><a href="index.html">BACK</a></div>
 
-<a class="corner-tl" href="index.html">
-  <div class="name-zh">鄭乃慈</div>
-  <div class="name-en">Nai Tzu Cheng</div>
-</a>
-
-<a class="back-link" href="index.html">Home</a>
-
-<div class="center-text">
-  <div class="label">Design</div>
-  <div class="title">Coming Soon</div>
-  <div class="subtitle">In progress · 2026</div>
+<div class="stage">
+  <div id="projects"></div>
 </div>
 
-<div class="corner-br">Portfolio 2026</div>
+<div class="dots" id="dots"></div>
 
+<div class="nav-side">
+  <div class="nav-arrow" id="prev" aria-label="Previous project">↑</div>
+  <div class="counter"><strong id="cur">01</strong>/<span id="total">04</span></div>
+  <div class="nav-arrow" id="next" aria-label="Next project">↓</div>
+</div>
+
+<div class="hint">
+  <kbd>↑</kbd> <kbd>↓</kbd> Navigate · Click image to enter
+</div>
+
+<!-- DETAIL MODAL -->
+<div id="detail-backdrop"></div>
+<div id="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+  <div class="detail-header">
+    <div class="htxt">
+      <h2 id="detail-title">—</h2>
+      <div class="en" id="detail-title-en">—</div>
+    </div>
+    <button id="detail-close" aria-label="Close">×</button>
+  </div>
+  <div class="detail-body">
+    <div class="detail-3d" id="detail-3d-wrap">
+      <div class="placeholder-msg">3D MODEL · placeholder</div>
+    </div>
+    <div class="detail-renders" id="detail-renders"></div>
+  </div>
+</div>
+
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
 <script>
-/* 簡化版水池:只有環境流動、沒有滑鼠互動、漣漪用一個自動的中央輕拍 */
-const cv = document.getElementById('scene');
-const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false });
-if(!gl){ document.body.style.background = '#0a1820'; throw new Error('No WebGL'); }
+// ============ PROJECT DATA ============
+// Each project: id (display), name_tc, name_en, location, category, area, blurb,
+//               thumb (iso jpg), glb (interactive model), renders (array of image URLs)
+const projects = [
+  {
+    id: '01',
+    name_tc: '理髮店室內設計',
+    name_en: 'Barber Shop · Interior',
+    location: '台北 · Taipei',
+    category: '商業空間 · Commercial',
+    area: '24 坪 · 79 m²',
+    blurb: '以暖灰水磨石與柚木為基調,鏡牆與洗髮區之間以一道弧形隔牆界定動線,自街道櫥窗即可窺見店內氛圍。',
+    thumb: null,    // placeholder until uploaded
+    glb: null,
+    renders: [],
+  },
+  {
+    id: '02',
+    name_tc: '作品 02',
+    name_en: 'Project 02',
+    location: '— · TBD',
+    category: '— · TBD',
+    area: '— · —',
+    blurb: '待補。',
+    thumb: null,
+    glb: null,
+    renders: [],
+  },
+  {
+    id: '03',
+    name_tc: '作品 03',
+    name_en: 'Project 03',
+    location: '— · TBD',
+    category: '— · TBD',
+    area: '— · —',
+    blurb: '待補。',
+    thumb: null,
+    glb: null,
+    renders: [],
+  },
+  {
+    id: '04',
+    name_tc: '作品 04',
+    name_en: 'Project 04',
+    location: '— · TBD',
+    category: '— · TBD',
+    area: '— · —',
+    blurb: '待補。',
+    thumb: null,
+    glb: null,
+    renders: [],
+  },
+];
 
-let W=0, H=0;
-const dpr = Math.min(window.devicePixelRatio || 1, 2);
-function fit(){
-  W = window.innerWidth; H = window.innerHeight;
-  cv.style.width = W+'px'; cv.style.height = H+'px';
-  cv.width = Math.floor(W*dpr); cv.height = Math.floor(H*dpr);
-  gl.viewport(0, 0, cv.width, cv.height);
+const N = projects.length;
+let curIdx = 0;
+const wrap = document.getElementById('projects');
+
+// Build DOM
+projects.forEach((p, i) => {
+  const div = document.createElement('article');
+  div.className = 'project';
+  div.dataset.idx = i;
+
+  const thumbHTML = p.thumb
+    ? `<img src="${p.thumb}" alt="${p.name_tc}">`
+    : `<div class="pcard placeholder">${p.name_en}<br>圖待補 · iso render</div>`;
+
+  div.innerHTML = `
+    <div class="pcard">
+      ${p.thumb ? `<img src="${p.thumb}" alt="${p.name_tc}">` : `<div style="font-family:var(--font-mono);font-size:11px;letter-spacing:0.25em;color:var(--ink-mute);text-transform:uppercase;text-align:center;padding:24px;line-height:1.8;">${p.name_en}<br>圖待補<br>ISO RENDER</div>`}
+    </div>
+    <div class="pmeta">
+      <div class="id-line">N° ${p.id} · DESIGN</div>
+      <div class="title-tc">${p.name_tc}</div>
+      <div class="title-en">${p.name_en}</div>
+      <dl class="specs">
+        <dt>位置 LOC.</dt><dd>${p.location}</dd>
+        <dt>類別 CAT.</dt><dd>${p.category}</dd>
+        <dt>坪數 AREA</dt><dd>${p.area}</dd>
+      </dl>
+      <div class="blurb">${p.blurb}</div>
+      <span class="cta">View Detail</span>
+    </div>
+  `;
+  wrap.appendChild(div);
+});
+
+// Build dots
+const dotsEl = document.getElementById('dots');
+projects.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot';
+  d.addEventListener('click', () => goTo(i));
+  dotsEl.appendChild(d);
+});
+
+document.getElementById('total').textContent = String(N).padStart(2, '0');
+
+const projectEls = Array.from(wrap.children);
+const dotEls = Array.from(dotsEl.children);
+
+function layout() {
+  projectEls.forEach((el, i) => {
+    el.classList.remove('is-current','is-prev','is-next','is-above','is-below');
+    if (i === curIdx) el.classList.add('is-current');
+    else if (i === curIdx - 1) el.classList.add('is-prev');
+    else if (i === curIdx + 1) el.classList.add('is-next');
+    else if (i < curIdx) el.classList.add('is-above');
+    else el.classList.add('is-below');
+  });
+  dotEls.forEach((d, i) => d.classList.toggle('active', i === curIdx));
+  document.getElementById('cur').textContent = String(curIdx + 1).padStart(2, '0');
 }
-fit();
-window.addEventListener('resize', fit);
 
-const VERT = `attribute vec2 a_pos;varying vec2 v_uv;void main(){v_uv=a_pos*0.5+0.5;gl_Position=vec4(a_pos,0.0,1.0);}`;
-
-const FRAG = `
-precision highp float;
-varying vec2 v_uv;
-uniform float u_time;
-uniform vec2 u_res;
-
-float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
-float noise(vec2 p){
-  vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
-  float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));
-  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
-}
-float fbm(vec2 p){float v=0.0,a=0.5;for(int i=0;i<5;i++){v+=a*noise(p);p*=2.02;a*=0.5;}return v;}
-float fbmStretch(vec2 p){p.y*=0.18;float v=0.0,a=0.5;for(int i=0;i<4;i++){v+=a*noise(p);p*=2.1;a*=0.5;}return v;}
-
-vec3 pondFloor(vec2 uv,float time){
-  vec2 flow1=vec2(time*0.005,time*0.008);
-  vec2 flow2=vec2(-time*0.004,time*0.003);
-  vec3 deepWater=vec3(0.025,0.10,0.11);
-  vec3 shallowWater=vec3(0.10,0.36,0.30);
-  float depth=fbm(uv*2.5+flow1);
-  vec3 baseColor=mix(deepWater,shallowWater,smoothstep(0.3,0.7,depth));
-  vec2 grassUV=uv*vec2(8.0,14.0)+vec2(time*0.01,0.0);
-  float grass=fbmStretch(grassUV);
-  float grassMask=smoothstep(0.45,0.65,fbm(uv*1.8+flow2));
-  grass=smoothstep(0.35,0.7,grass);
-  vec3 grassColor=vec3(0.10,0.42,0.18);
-  vec3 grassTip=vec3(0.45,0.78,0.22);
-  float tipMask=smoothstep(0.55,0.8,noise(grassUV*1.5+flow1*2.0));
-  vec3 grassFinal=mix(grassColor,grassTip,tipMask*0.7);
-  baseColor=mix(baseColor,grassFinal,grass*grassMask*0.85);
-  float stoneNoise=fbm(uv*3.5+vec2(7.0,13.0));
-  float stoneMask=smoothstep(0.62,0.7,stoneNoise)*(1.0-grassMask*0.7);
-  baseColor=mix(baseColor,vec3(0.18,0.20,0.18),stoneMask*0.45);
-  return baseColor;
+function goTo(idx) {
+  curIdx = (idx + N) % N;
+  layout();
 }
 
-float caustics(vec2 uv,float time){
-  vec2 p1=uv*6.0+vec2(time*0.06,time*0.04);
-  vec2 p2=uv*7.0+vec2(-time*0.05,time*0.07);
-  float c=pow(1.0-abs(noise(p1)-0.5)*2.0,4.0);
-  c+=pow(1.0-abs(noise(p2)-0.5)*2.0,4.0);
-  return c*0.5;
-}
+document.getElementById('prev').addEventListener('click', () => goTo(curIdx - 1));
+document.getElementById('next').addEventListener('click', () => goTo(curIdx + 1));
 
-void main(){
-  vec2 uv=v_uv;
-  float aspect=u_res.x/u_res.y;
-  vec2 uvAspect=vec2(uv.x*aspect,uv.y);
+window.addEventListener('keydown', (e) => {
+  if (document.body.classList.contains('has-detail-active')) return;
+  if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); goTo(curIdx - 1); }
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); goTo(curIdx + 1); }
+  else if (e.key === 'Home') { goTo(0); }
+  else if (e.key === 'End') { goTo(N - 1); }
+});
 
-  /* 自動中央漣漪:每 8 秒一次,從中心擴出 */
-  float cyclePeriod=8.0;
-  float cycleT=mod(u_time,cyclePeriod);
-  vec2 center=vec2(0.5*aspect,0.5);
-  float dist=length(uvAspect-center);
-  float speed=0.08;
-  float front=cycleT*speed;
-  float offset=dist-front;
-  float packetWidth=0.18+cycleT*0.012;
-  float rippleH=0.0;
-  vec2 dH=vec2(0);
-  if(abs(offset)<packetWidth){
-    float env=exp(-pow(offset/packetWidth,2.0)*1.4);
-    float carrier=sin(-offset/0.040*6.2831);
-    float ageAtt=exp(-cycleT*0.18);
-    rippleH=0.7*env*carrier*ageAtt;
-    float gradMag=0.7*env*cos(-offset/0.040*6.2831)*(6.2831/0.040)*ageAtt;
-    if(dist>0.0001){vec2 d2=(uvAspect-center)/dist;dH+=gradMag*d2;}
+// Wheel navigation (debounced)
+let wheelTimer = null;
+window.addEventListener('wheel', (e) => {
+  if (document.body.classList.contains('has-detail-active')) return;
+  if (wheelTimer) return;
+  if (Math.abs(e.deltaY) < 12) return;
+  goTo(curIdx + (e.deltaY > 0 ? 1 : -1));
+  wheelTimer = setTimeout(() => { wheelTimer = null; }, 600);
+}, { passive: true });
+
+// Click pcard to open detail
+wrap.addEventListener('click', (e) => {
+  const pcard = e.target.closest('.pcard');
+  if (!pcard) return;
+  const projEl = pcard.closest('.project');
+  if (!projEl || !projEl.classList.contains('is-current')) return;
+  const idx = parseInt(projEl.dataset.idx, 10);
+  openDetail(idx);
+});
+
+// ============ DETAIL MODAL ============
+const backdrop = document.getElementById('detail-backdrop');
+const modal = document.getElementById('detail-modal');
+const titleEl = document.getElementById('detail-title');
+const titleEnEl = document.getElementById('detail-title-en');
+const threeDWrap = document.getElementById('detail-3d-wrap');
+const rendersWrap = document.getElementById('detail-renders');
+const closeBtn = document.getElementById('detail-close');
+
+function openDetail(idx) {
+  const p = projects[idx];
+  if (!p) return;
+
+  titleEl.textContent = p.name_tc;
+  titleEnEl.textContent = p.name_en;
+
+  // 3D pane
+  threeDWrap.innerHTML = '';
+  if (p.glb) {
+    const mv = document.createElement('model-viewer');
+    mv.src = p.glb;
+    mv.alt = p.name_tc;
+    mv.setAttribute('camera-controls','');
+    mv.setAttribute('touch-action','pan-y');
+    mv.setAttribute('auto-rotate','');
+    mv.setAttribute('auto-rotate-delay','1500');
+    mv.setAttribute('rotation-per-second','12deg');
+    mv.setAttribute('interaction-prompt','none');
+    mv.setAttribute('shadow-intensity','1.2');
+    mv.setAttribute('shadow-softness','0.8');
+    mv.setAttribute('environment-image','neutral');
+    mv.setAttribute('exposure','1.05');
+    mv.setAttribute('tone-mapping','aces');
+    mv.setAttribute('field-of-view','32deg');
+    mv.setAttribute('camera-target','auto auto auto');
+    threeDWrap.appendChild(mv);
+  } else {
+    const ph = document.createElement('div');
+    ph.className = 'placeholder-msg';
+    ph.innerHTML = '3D MODEL<br>· coming soon ·';
+    threeDWrap.appendChild(ph);
   }
 
-  /* 基礎水流 */
-  vec2 flow1=vec2(u_time*0.04,u_time*0.025);
-  vec2 flow2=vec2(-u_time*0.03,u_time*0.05);
-  float baseFlow=fbm(uvAspect*4.0+flow1)-0.5;
-  baseFlow+=(fbm(uvAspect*6.0+flow2)-0.5)*0.5;
-  baseFlow*=0.04;
-  rippleH+=baseFlow;
-  float eps=0.004;
-  float bfx=fbm((uvAspect+vec2(eps,0))*4.0+flow1)-fbm((uvAspect-vec2(eps,0))*4.0+flow1);
-  float bfy=fbm((uvAspect+vec2(0,eps))*4.0+flow1)-fbm((uvAspect-vec2(0,eps))*4.0+flow1);
-  dH+=vec2(bfx,bfy)*0.5;
+  // Renders pane
+  rendersWrap.innerHTML = '';
+  if (p.renders && p.renders.length) {
+    p.renders.forEach(src => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = p.name_tc;
+      img.loading = 'lazy';
+      rendersWrap.appendChild(img);
+    });
+  } else {
+    for (let i = 0; i < 3; i++) {
+      const ph = document.createElement('div');
+      ph.className = 'ph';
+      ph.textContent = `RENDER ${String(i+1).padStart(2,'0')} · 待補`;
+      rendersWrap.appendChild(ph);
+    }
+  }
 
-  vec2 distortedUV=uvAspect+dH*0.018;
-  vec3 floorColor=pondFloor(distortedUV,u_time);
-  float caus=caustics(distortedUV*0.8,u_time);
-  caus=caus*(1.0+max(0.0,rippleH)*6.0*0.5);
-  floorColor+=vec3(1.0,0.95,0.75)*caus*0.18;
-  float surfaceShine=max(0.0,rippleH)*8.0;
-  surfaceShine=pow(min(1.0,surfaceShine),1.5);
-  floorColor+=vec3(1.0,0.98,0.92)*surfaceShine*0.35;
-  floorColor*=(1.0-max(0.0,-rippleH)*6.0*0.3);
-
-  float distToCenter=length(uvAspect-center);
-  float coreLight=pow(1.0-smoothstep(0.0,0.30,distToCenter),1.5);
-  float midLight=1.0-smoothstep(0.18,0.55,distToCenter);
-  floorColor*=0.15+midLight*0.55+coreLight*0.55;
-  floorColor*=1.0-smoothstep(0.5,0.95,distToCenter)*0.5;
-  floorColor+=vec3(1.0,0.96,0.85)*coreLight*0.12;
-
-  gl_FragColor=vec4(floorColor,1.0);
+  backdrop.classList.add('active');
+  modal.classList.add('active');
+  document.body.classList.add('has-detail-active');
 }
-`;
 
-function compile(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(sh));throw new Error;}return sh;}
-const vs=compile(gl.VERTEX_SHADER,VERT);
-const fs=compile(gl.FRAGMENT_SHADER,FRAG);
-const prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);gl.useProgram(prog);
-const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
-const aPos=gl.getAttribLocation(prog,'a_pos');gl.enableVertexAttribArray(aPos);gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);
-const uTime=gl.getUniformLocation(prog,'u_time');
-const uRes=gl.getUniformLocation(prog,'u_res');
-const t0=performance.now();
-function frame(){
-  const t=(performance.now()-t0)/1000;
-  gl.uniform1f(uTime,t);
-  gl.uniform2f(uRes,cv.width,cv.height);
-  gl.drawArrays(gl.TRIANGLES,0,6);
-  requestAnimationFrame(frame);
+function closeDetail() {
+  backdrop.classList.remove('active');
+  modal.classList.remove('active');
+  document.body.classList.remove('has-detail-active');
+  // Clean up model-viewer to release resources
+  setTimeout(() => {
+    threeDWrap.querySelectorAll('model-viewer').forEach(m => m.remove());
+    rendersWrap.innerHTML = '';
+  }, 400);
 }
-requestAnimationFrame(frame);
+
+closeBtn.addEventListener('click', closeDetail);
+backdrop.addEventListener('click', closeDetail);
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.body.classList.contains('has-detail-active')) {
+    closeDetail();
+  }
+});
+
+// Initial layout
+layout();
 </script>
+
 </body>
 </html>
