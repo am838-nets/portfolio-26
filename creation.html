@@ -939,23 +939,30 @@ if (gl) {
 })();
 
 // ============ CLICK HINT TOOLTIP ============
-// Follows cursor when hovering the centered preview of a work that has GLB.
-// Shows after cursor stops moving for ~1s. Hides on movement / leave / 3D open.
+// Shows "點擊圖片 CLICK TO VIEW 3D" after cursor stops moving for 1s anywhere
+// on the page, EXCEPT when hovering UI controls or when 3D modal is open
+// (and only if the current center item actually has a GLB).
 (function () {
   const hint = document.getElementById('click-hint');
   if (!hint) return;
 
   let timer = null;
   let lastX = 0, lastY = 0;
-  let overValidItem = false;
 
-  function isClickableCenter(el) {
-    const itemEl = el && el.closest && el.closest('.item.is-center');
-    if (!itemEl) return false;
-    const idx = parseInt(itemEl.dataset.idx, 10);
-    if (isNaN(idx)) return false;
+  // UI elements where the hint would be misleading or visually conflict
+  const UI_SELECTOR = '.arrow, .dot, .corner, .controls, .hint, .series-dots, .info, #three-close, .counter, .kbd, kbd';
+
+  function isOverUI(el) {
+    return !!(el && el.closest && el.closest(UI_SELECTOR));
+  }
+
+  function currentCenterHasGLB() {
     const items = window.__items;
-    return !!(items && items[idx] && items[idx].glb);
+    if (!items) return false;
+    const centerEl = document.querySelector('.item.is-center');
+    if (!centerEl) return false;
+    const idx = parseInt(centerEl.dataset.idx, 10);
+    return !!(items[idx] && items[idx].glb);
   }
 
   function hideHint() {
@@ -963,11 +970,11 @@ if (gl) {
     if (timer) { clearTimeout(timer); timer = null; }
   }
 
-  function scheduleShow(x, y) {
+  function scheduleShow() {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       if (document.body.classList.contains('has-3d-active')) return;
-      if (!overValidItem) return;
+      if (!currentCenterHasGLB()) return;
       hint.style.left = lastX + 'px';
       hint.style.top  = lastY + 'px';
       hint.classList.add('visible');
@@ -981,17 +988,16 @@ if (gl) {
     }
     lastX = e.clientX;
     lastY = e.clientY;
-    overValidItem = isClickableCenter(e.target);
 
-    // While moving, hide. After 1s of no movement on valid target, show.
     if (hint.classList.contains('visible')) {
       hint.classList.remove('visible');
     }
-    if (overValidItem) {
-      scheduleShow(lastX, lastY);
-    } else if (timer) {
-      clearTimeout(timer); timer = null;
+
+    if (isOverUI(e.target)) {
+      if (timer) { clearTimeout(timer); timer = null; }
+      return;
     }
+    scheduleShow();
   });
 
   document.addEventListener('mouseleave', hideHint);
