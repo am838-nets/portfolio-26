@@ -457,6 +457,41 @@ body.has-3d-active .item.is-center .item-art.placeholder {
   #three-close:hover { transform: scale(1.06); }
   #three-close:active { transform: scale(0.94); }
 }
+/* ============ CLICK HINT TOOLTIP (follows cursor on center item) ============ */
+#click-hint {
+  position: fixed;
+  pointer-events: none;
+  z-index: 2500;
+  background: rgba(245,243,236,0.96);
+  color: rgba(20,20,18,0.92);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 6px 10px;
+  border-radius: 3px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(14px, 14px);
+  transition: opacity 220ms ease;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  user-select: none;
+}
+#click-hint.visible {
+  opacity: 1;
+}
+#click-hint .zh {
+  font-weight: 500;
+}
+#click-hint .en {
+  margin-left: 6px;
+  opacity: 0.55;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+body.has-3d-active #click-hint {
+  display: none;
+}
+
 </style>
 </head>
 <body>
@@ -477,6 +512,8 @@ body.has-3d-active .item.is-center .item-art.placeholder {
   <div id="three-loading">Loading 3D…</div>
   <button id="three-close" aria-label="Close 3D view">×</button>
 </div>
+
+<div id="click-hint"><span class="zh">點擊圖片</span><span class="en">CLICK TO VIEW 3D</span></div>
 
 <div class="info" id="info">
   <div class="info-series" id="info-series">DUCK PARK SERIES</div>
@@ -903,6 +940,66 @@ if (gl) {
       load3D(e.detail.item);
     }
   });
+})();
+
+// ============ CLICK HINT TOOLTIP ============
+// Follows cursor when hovering the centered preview of a work that has GLB.
+// Shows after cursor stops moving for ~1s. Hides on movement / leave / 3D open.
+(function () {
+  const hint = document.getElementById('click-hint');
+  if (!hint) return;
+
+  let timer = null;
+  let lastX = 0, lastY = 0;
+  let overValidItem = false;
+
+  function isClickableCenter(el) {
+    const itemEl = el && el.closest && el.closest('.item.is-center');
+    if (!itemEl) return false;
+    const idx = parseInt(itemEl.dataset.idx, 10);
+    if (isNaN(idx)) return false;
+    const items = window.__items;
+    return !!(items && items[idx] && items[idx].glb);
+  }
+
+  function hideHint() {
+    hint.classList.remove('visible');
+    if (timer) { clearTimeout(timer); timer = null; }
+  }
+
+  function scheduleShow(x, y) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (document.body.classList.contains('has-3d-active')) return;
+      if (!overValidItem) return;
+      hint.style.left = lastX + 'px';
+      hint.style.top  = lastY + 'px';
+      hint.classList.add('visible');
+    }, 1000);
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    if (document.body.classList.contains('has-3d-active')) {
+      hideHint();
+      return;
+    }
+    lastX = e.clientX;
+    lastY = e.clientY;
+    overValidItem = isClickableCenter(e.target);
+
+    // While moving, hide. After 1s of no movement on valid target, show.
+    if (hint.classList.contains('visible')) {
+      hint.classList.remove('visible');
+    }
+    if (overValidItem) {
+      scheduleShow(lastX, lastY);
+    } else if (timer) {
+      clearTimeout(timer); timer = null;
+    }
+  });
+
+  document.addEventListener('mouseleave', hideHint);
+  document.addEventListener('click', hideHint);
 })();
 </script>
 </body>
