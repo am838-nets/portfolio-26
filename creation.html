@@ -156,6 +156,7 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
 .item.is-center .item-inner {
   opacity: 1 !important;
   filter: none !important;
+  cursor: pointer;
 }
 .item.is-center .series-band {
   width: 120px;
@@ -491,7 +492,7 @@ body.has-3d-active .item.is-center .item-art.placeholder {
   <div class="arrow" id="next">›</div>
 </div>
 
-<div class="hint"><kbd>←</kbd> <kbd>→</kbd> Navigate · Drag to rotate</div>
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> Navigate · Click center to view 3D</div>
 
 <script>
 const T = {
@@ -521,6 +522,7 @@ const items = [
   { id:'11', name:'Broom Collection', series:'duck', client:'Banqiao Duck Park · 2024', img:'broom', glb:'creations/broom.glb' },
   { id:'12', name:'Coming Soon', series:null, client:'Future · TBD', img:null },
 ];
+window.__items = items;  // for 3D click handler
 
 const seriesMap = {
   zoo:  { label:'PRODUCT DEVELOPMENT', color:'rgba(241,165,200,1)', pond:[0.95, 0.65, 0.82], glow:'rgba(241,165,200,0.28)' },   // pink
@@ -829,6 +831,9 @@ if (gl) {
     mv.setAttribute('disable-zoom', '');
     mv.setAttribute('field-of-view', '28deg');
     mv.setAttribute('camera-orbit', '15deg 75deg 105%');
+    // After load, force camera-target to actual model bounding box center
+    // (fixes models whose vertices are far from origin -> orbits around wrong point)
+    mv.setAttribute('camera-target', 'auto auto auto');
 
     loadingEl.style.display = 'flex';
     mv.addEventListener('load', () => {
@@ -857,8 +862,7 @@ if (gl) {
     overlay.insertBefore(currentMv, loadingEl);
   }
 
-  // X closes modal. Ring becomes interactive again. Coming back to the
-  // same item re-opens 3D naturally (centerchange only fires when centerIdx changes).
+  // X closes modal. Ring becomes interactive again.
   if (closeBtn) {
     closeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -870,8 +874,34 @@ if (gl) {
     if (e.key === 'Escape' && currentMv) tearDown();
   });
 
+  // Click on the centered item's preview opens 3D (if it has a GLB).
+  // No auto-load on navigation — user explicitly clicks to enter 3D.
+  document.addEventListener('click', (e) => {
+    // Don't trigger if we're already in 3D modal
+    if (document.body.classList.contains('has-3d-active')) return;
+    // Don't trigger on navigation controls or other UI
+    if (e.target.closest('.arrow, .dot, .corner, .info, .controls, .hint, .series-dots')) return;
+    // Find clicked item
+    const itemEl = e.target.closest('.item');
+    if (!itemEl || !itemEl.classList.contains('is-center')) return;
+    // Look up the matching items entry
+    const idx = parseInt(itemEl.dataset.idx, 10);
+    if (isNaN(idx)) return;
+    const allItems = window.__items;
+    if (!allItems) return;
+    const item = allItems[idx];
+    if (item && item.glb) {
+      load3D(item);
+    }
+  });
+
+  // Re-load 3D when ring center changes WHILE 3D is already active
+  // (e.g., user pressed arrow keys with 3D open - though we usually lock this)
+  // This keeps the modal in sync if it's open.
   window.addEventListener('centerchange', (e) => {
-    load3D(e.detail.item);
+    if (document.body.classList.contains('has-3d-active')) {
+      load3D(e.detail.item);
+    }
   });
 })();
 </script>
