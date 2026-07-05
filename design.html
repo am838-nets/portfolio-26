@@ -418,63 +418,116 @@ html, body {
 
 .detail-body {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  background: #060606;
 }
-.detail-3d {
-  background: #050505;
+/* Main large image */
+.gallery-main {
+  flex: 1;
+  min-height: 0;
   position: relative;
   display: grid;
   place-items: center;
+  background: #050505;
+  overflow: hidden;
 }
-.detail-3d model-viewer {
-  width: 100%;
-  height: 100%;
-  background-color: transparent;
+.gallery-main img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  animation: fadein 400ms ease;
 }
-.detail-3d .placeholder-msg {
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+.gallery-main .placeholder-msg {
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.25em;
+  font-size: 11px;
+  letter-spacing: 0.28em;
   color: var(--ink-mute);
   text-transform: uppercase;
   text-align: center;
-  padding: 24px;
-  line-height: 1.8;
+  padding: 40px;
+  line-height: 2;
 }
-.detail-renders {
-  background: #080808;
-  overflow-y: auto;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.detail-renders::-webkit-scrollbar { width: 6px; }
-.detail-renders::-webkit-scrollbar-track { background: transparent; }
-.detail-renders::-webkit-scrollbar-thumb { background: rgba(245,243,236,0.15); border-radius: 3px; }
-.detail-renders img {
-  width: 100%;
-  height: auto;
-  display: block;
-  background: #050505;
-  border: 1px solid rgba(245,243,236,0.04);
-}
-.detail-renders .ph {
-  width: 100%;
-  aspect-ratio: 4/3;
+/* Prev/next arrows over main image */
+.gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(245,243,236,0.2);
+  background: rgba(5,5,5,0.5);
+  backdrop-filter: blur(6px);
+  color: var(--ink-dim);
   display: grid;
   place-items: center;
-  background:
-    linear-gradient(135deg, rgba(245,243,236,0.03), rgba(245,243,236,0.005));
-  border: 1px dashed rgba(245,243,236,0.1);
+  cursor: pointer;
+  font-size: 16px;
+  transition: all .25s;
+  user-select: none;
+  z-index: 2;
+}
+.gallery-nav:hover { border-color: var(--ink); color: var(--ink); }
+.gallery-nav.gprev { left: 20px; }
+.gallery-nav.gnext { right: 20px; }
+.gallery-nav.hidden { display: none; }
+/* Thumbnail strip */
+.gallery-strip {
+  flex-shrink: 0;
+  height: 96px;
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #0a0a0a;
+  border-top: 1px solid rgba(245,243,236,0.06);
+  align-items: center;
+}
+.gallery-strip::-webkit-scrollbar { height: 5px; }
+.gallery-strip::-webkit-scrollbar-track { background: transparent; }
+.gallery-strip::-webkit-scrollbar-thumb { background: rgba(245,243,236,0.15); border-radius: 3px; }
+.gthumb {
+  height: 68px;
+  aspect-ratio: 4/3;
+  flex-shrink: 0;
+  background: #050505;
+  border: 1px solid rgba(245,243,236,0.08);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color .25s, opacity .25s;
+  opacity: 0.5;
+}
+.gthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gthumb:hover { opacity: 0.85; }
+.gthumb.active { opacity: 1; border-color: var(--ink); }
+.gthumb.ph {
+  display: grid;
+  place-items: center;
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.25em;
+  font-size: 8px;
+  letter-spacing: 0.2em;
   color: var(--ink-mute);
   text-transform: uppercase;
+}
+/* Image counter */
+.gallery-count {
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--ink-dim);
+  background: rgba(5,5,5,0.5);
+  backdrop-filter: blur(6px);
+  padding: 4px 10px;
+  border-radius: 2px;
+  z-index: 2;
 }
 
 /* Mobile */
@@ -490,7 +543,8 @@ html, body {
   .corner.tl { top: 16px; left: 16px; }
   .corner.tr { top: 16px; right: 16px; font-size: 9px; }
   #detail-modal { width: 96vw; height: 92vh; }
-  .detail-body { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  .gallery-strip { height: 80px; }
+  .gthumb { height: 54px; }
 }
 </style>
 </head>
@@ -531,30 +585,33 @@ html, body {
     <button id="detail-close" aria-label="Close">×</button>
   </div>
   <div class="detail-body">
-    <div class="detail-3d" id="detail-3d-wrap">
-      <div class="placeholder-msg">3D MODEL · placeholder</div>
+    <div class="gallery-main" id="gallery-main">
+      <div class="gallery-nav gprev" id="gallery-prev">‹</div>
+      <div class="gallery-nav gnext" id="gallery-next">›</div>
+      <div class="gallery-count" id="gallery-count"></div>
+      <div class="placeholder-msg">IMAGES · placeholder</div>
     </div>
-    <div class="detail-renders" id="detail-renders"></div>
+    <div class="gallery-strip" id="gallery-strip"></div>
   </div>
 </div>
 
-<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
 <script>
 // ============ PROJECT DATA ============
-// Each project: id (display), name_tc, name_en, location, category, area, blurb,
-//               thumb (iso jpg), glb (interactive model), renders (array of image URLs)
+// Each project: id, name_tc, name_en, location, category, area, blurb,
+//   thumb  = list-page preview jpg (45° iso view)
+//   images = array of image URLs shown in the detail gallery (main + strip).
+//            First image is used as the opening main image.
 const projects = [
   {
     id: '01',
-    name_tc: '理髮店室內設計',
-    name_en: 'Barber Shop · Interior',
+    name_tc: '寧夏圓環男士髮廊',
+    name_en: 'Ningxia Barber · Interior',
     location: '台北 · Taipei',
     category: '商業空間 · Commercial',
     area: '24 坪 · 79 m²',
     blurb: '以暖灰水磨石與柚木為基調,鏡牆與洗髮區之間以一道弧形隔牆界定動線,自街道櫥窗即可窺見店內氛圍。',
-    thumb: null,    // placeholder until uploaded
-    glb: null,
-    renders: [],
+    thumb: null,     // list-page preview (45° iso) — awaiting upload
+    images: [],      // detail gallery images — awaiting upload
   },
   {
     id: '02',
@@ -565,8 +622,7 @@ const projects = [
     area: '— · —',
     blurb: '待補。',
     thumb: null,
-    glb: null,
-    renders: [],
+    images: [],
   },
   {
     id: '03',
@@ -577,8 +633,7 @@ const projects = [
     area: '— · —',
     blurb: '待補。',
     thumb: null,
-    glb: null,
-    renders: [],
+    images: [],
   },
   {
     id: '04',
@@ -589,8 +644,7 @@ const projects = [
     area: '— · —',
     blurb: '待補。',
     thumb: null,
-    glb: null,
-    renders: [],
+    images: [],
   },
 ];
 
@@ -691,14 +745,47 @@ wrap.addEventListener('click', (e) => {
   openDetail(idx);
 });
 
-// ============ DETAIL MODAL ============
+// ============ DETAIL GALLERY MODAL ============
 const backdrop = document.getElementById('detail-backdrop');
 const modal = document.getElementById('detail-modal');
 const titleEl = document.getElementById('detail-title');
 const titleEnEl = document.getElementById('detail-title-en');
-const threeDWrap = document.getElementById('detail-3d-wrap');
-const rendersWrap = document.getElementById('detail-renders');
 const closeBtn = document.getElementById('detail-close');
+const gMain = document.getElementById('gallery-main');
+const gStrip = document.getElementById('gallery-strip');
+const gPrev = document.getElementById('gallery-prev');
+const gNext = document.getElementById('gallery-next');
+const gCount = document.getElementById('gallery-count');
+
+let galleryImages = [];
+let galleryIdx = 0;
+
+function showGalleryImage(i) {
+  if (!galleryImages.length) return;
+  galleryIdx = (i + galleryImages.length) % galleryImages.length;
+
+  // Update main image
+  gMain.querySelectorAll('img, .placeholder-msg').forEach(el => el.remove());
+  const img = document.createElement('img');
+  img.src = galleryImages[galleryIdx];
+  img.alt = titleEl.textContent + ' — ' + (galleryIdx + 1);
+  gMain.insertBefore(img, gPrev);
+
+  // Update active thumbnail
+  Array.from(gStrip.children).forEach((t, k) => t.classList.toggle('active', k === galleryIdx));
+  // Scroll active thumb into view
+  const activeThumb = gStrip.children[galleryIdx];
+  if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+  // Counter
+  gCount.textContent = `${String(galleryIdx + 1).padStart(2,'0')} / ${String(galleryImages.length).padStart(2,'0')}`;
+
+  // Arrow visibility
+  const single = galleryImages.length <= 1;
+  gPrev.classList.toggle('hidden', single);
+  gNext.classList.toggle('hidden', single);
+  gCount.style.display = single ? 'none' : '';
+}
 
 function openDetail(idx) {
   const p = projects[idx];
@@ -707,49 +794,39 @@ function openDetail(idx) {
   titleEl.textContent = p.name_tc;
   titleEnEl.textContent = p.name_en;
 
-  // 3D pane
-  threeDWrap.innerHTML = '';
-  if (p.glb) {
-    const mv = document.createElement('model-viewer');
-    mv.src = p.glb;
-    mv.alt = p.name_tc;
-    mv.setAttribute('camera-controls','');
-    mv.setAttribute('touch-action','pan-y');
-    mv.setAttribute('auto-rotate','');
-    mv.setAttribute('auto-rotate-delay','1500');
-    mv.setAttribute('rotation-per-second','12deg');
-    mv.setAttribute('interaction-prompt','none');
-    mv.setAttribute('shadow-intensity','1.2');
-    mv.setAttribute('shadow-softness','0.8');
-    mv.setAttribute('environment-image','neutral');
-    mv.setAttribute('exposure','1.05');
-    mv.setAttribute('tone-mapping','aces');
-    mv.setAttribute('field-of-view','32deg');
-    mv.setAttribute('camera-target','auto auto auto');
-    threeDWrap.appendChild(mv);
+  galleryImages = (p.images && p.images.length) ? p.images.slice() : [];
+  galleryIdx = 0;
+
+  // Build thumbnail strip
+  gStrip.innerHTML = '';
+  if (galleryImages.length) {
+    galleryImages.forEach((src, k) => {
+      const th = document.createElement('div');
+      th.className = 'gthumb' + (k === 0 ? ' active' : '');
+      const im = document.createElement('img');
+      im.src = src;
+      im.loading = 'lazy';
+      th.appendChild(im);
+      th.addEventListener('click', () => showGalleryImage(k));
+      gStrip.appendChild(th);
+    });
+    showGalleryImage(0);
   } else {
+    // No images yet — placeholder state
+    gMain.querySelectorAll('img, .placeholder-msg').forEach(el => el.remove());
     const ph = document.createElement('div');
     ph.className = 'placeholder-msg';
-    ph.innerHTML = '3D MODEL<br>· coming soon ·';
-    threeDWrap.appendChild(ph);
-  }
-
-  // Renders pane
-  rendersWrap.innerHTML = '';
-  if (p.renders && p.renders.length) {
-    p.renders.forEach(src => {
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = p.name_tc;
-      img.loading = 'lazy';
-      rendersWrap.appendChild(img);
-    });
-  } else {
-    for (let i = 0; i < 3; i++) {
-      const ph = document.createElement('div');
-      ph.className = 'ph';
-      ph.textContent = `RENDER ${String(i+1).padStart(2,'0')} · 待補`;
-      rendersWrap.appendChild(ph);
+    ph.innerHTML = 'IMAGES · 待補<br>45° iso + interior renders';
+    gMain.insertBefore(ph, gPrev);
+    gCount.textContent = '';
+    gPrev.classList.add('hidden');
+    gNext.classList.add('hidden');
+    // placeholder thumbs
+    for (let i = 0; i < 4; i++) {
+      const th = document.createElement('div');
+      th.className = 'gthumb ph';
+      th.textContent = String(i + 1).padStart(2, '0');
+      gStrip.appendChild(th);
     }
   }
 
@@ -762,19 +839,23 @@ function closeDetail() {
   backdrop.classList.remove('active');
   modal.classList.remove('active');
   document.body.classList.remove('has-detail-active');
-  // Clean up model-viewer to release resources
   setTimeout(() => {
-    threeDWrap.querySelectorAll('model-viewer').forEach(m => m.remove());
-    rendersWrap.innerHTML = '';
+    gMain.querySelectorAll('img').forEach(el => el.remove());
+    gStrip.innerHTML = '';
+    galleryImages = [];
   }, 400);
 }
 
+gPrev.addEventListener('click', (e) => { e.stopPropagation(); showGalleryImage(galleryIdx - 1); });
+gNext.addEventListener('click', (e) => { e.stopPropagation(); showGalleryImage(galleryIdx + 1); });
 closeBtn.addEventListener('click', closeDetail);
 backdrop.addEventListener('click', closeDetail);
+
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.body.classList.contains('has-detail-active')) {
-    closeDetail();
-  }
+  if (!document.body.classList.contains('has-detail-active')) return;
+  if (e.key === 'Escape') closeDetail();
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); showGalleryImage(galleryIdx - 1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); showGalleryImage(galleryIdx + 1); }
 });
 
 // Initial layout
