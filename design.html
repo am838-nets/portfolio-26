@@ -199,6 +199,8 @@ html, body {
   align-items: center;
   gap: 10px;
   transition: color .25s;
+  cursor: pointer;
+  width: max-content;
 }
 .pmeta .cta::after {
   content: '→';
@@ -206,10 +208,11 @@ html, body {
   transition: transform .35s;
 }
 .project.is-current .pcard:hover ~ .pmeta .cta,
-.pmeta:hover .cta {
+.pmeta .cta:hover {
   color: var(--ink);
 }
-.project.is-current .pcard:hover ~ .pmeta .cta::after {
+.project.is-current .pcard:hover ~ .pmeta .cta::after,
+.pmeta .cta:hover::after {
   transform: translateX(6px);
 }
 
@@ -428,14 +431,18 @@ html, body {
   flex: 1;
   min-height: 0;
   position: relative;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #050505;
   overflow: hidden;
+  padding: 24px 68px;
 }
 .gallery-main img {
   max-width: 100%;
   max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
   display: block;
   animation: fadein 400ms ease;
@@ -681,7 +688,7 @@ projects.forEach((p, i) => {
         <dt>坪數 AREA</dt><dd>${p.area}</dd>
       </dl>
       <div class="blurb">${p.blurb}</div>
-      <span class="cta">View Detail</span>
+      <span class="cta" data-open-detail>View Detail</span>
     </div>
   `;
   wrap.appendChild(div);
@@ -740,11 +747,11 @@ window.addEventListener('wheel', (e) => {
   wheelTimer = setTimeout(() => { wheelTimer = null; }, 600);
 }, { passive: true });
 
-// Click pcard to open detail
+// Click pcard image OR "View Detail" to open the gallery
 wrap.addEventListener('click', (e) => {
-  const pcard = e.target.closest('.pcard');
-  if (!pcard) return;
-  const projEl = pcard.closest('.project');
+  const trigger = e.target.closest('.pcard, [data-open-detail]');
+  if (!trigger) return;
+  const projEl = trigger.closest('.project');
   if (!projEl || !projEl.classList.contains('is-current')) return;
   const idx = parseInt(projEl.dataset.idx, 10);
   openDetail(idx);
