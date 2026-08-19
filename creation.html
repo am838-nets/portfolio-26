@@ -328,6 +328,32 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   .series-dots { bottom: 90px; }
 }
 
+/* Mobile persistent hint (replaces cursor tooltip which needs a mouse) */
+.hint-mobile {
+  display: none;
+  position: fixed;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 80;
+  font-family: var(--font-tc);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  padding: 8px 16px;
+  background: rgba(5,5,5,0.4);
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+body.has-3d-active .hint-mobile { display: none !important; }
+@media (max-width: 768px) {
+  .hint-mobile { display: block; }
+}
+
 /* ============ 3D MODAL LAYER (proper modal with backdrop, no accidental dismiss) ============ */
 #three-backdrop {
   position: fixed;
@@ -526,6 +552,7 @@ body.has-3d-active #click-hint { display: none; }
 </div>
 
 <div class="hint"><kbd>←</kbd> <kbd>→</kbd> Navigate · Click center to view 3D</div>
+<div class="hint-mobile">滑動切換作品 · 點擊中央圖片看 3D</div>
 
 <script>
 const T = {

@@ -538,20 +538,90 @@ html, body {
 }
 
 /* Mobile */
+/* ============ TABLET ============ */
+@media (max-width: 1024px) and (min-width: 901px) {
+  #projects { width: 90vw; }
+  .project { grid-template-columns: 1fr 1fr; gap: 36px; }
+  .pmeta .title-tc { font-size: 24px; }
+  .pmeta .blurb { font-size: 12.5px; }
+}
+
+/* ============ MOBILE — natural vertical scroll, all projects stacked ============ */
 @media (max-width: 900px) {
-  .project {
-    grid-template-columns: 1fr;
-    gap: 24px;
-    padding: 0 20px;
+  html, body { overflow-y: auto; overflow-x: hidden; height: auto; }
+  .stage {
+    position: static;
+    display: block;
+    min-height: 100vh;
+    padding: 92px 0 60px;
+    perspective: none;
   }
-  .pcard { aspect-ratio: 16/10; }
+  #projects {
+    position: static;
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 64px;
+    padding: 0 22px;
+  }
+  /* Each project becomes a normal stacked card, image over text */
+  .project {
+    position: static !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    pointer-events: auto !important;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    top: auto;
+  }
+  .project.is-above, .project.is-below,
+  .project.is-prev, .project.is-next, .project.is-current {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+  .pcard { aspect-ratio: 4/3; cursor: pointer; }
+  .project .pcard {
+    border-color: rgba(245,243,236,0.14);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+  }
+  .pmeta { padding: 0 4px; gap: 14px; }
+  .pmeta .title-tc { font-size: 22px; }
+  .pmeta .blurb { font-size: 13px; max-width: none; }
+  .pmeta .cta {
+    color: var(--ink);
+    border: 1px solid rgba(245,243,236,0.25);
+    padding: 12px 18px;
+    border-radius: 3px;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  /* Hide desktop-only side navigation; scrolling replaces it */
+  .nav-side, .dots, .hint { display: none; }
+  .corner.tl { top: 16px; left: 18px; }
+  .corner.tr { top: 16px; right: 18px; font-size: 9px; }
+  /* Detail gallery modal fills the screen */
+  #detail-modal { width: 100vw; height: 100vh; border: none; }
+  .detail-header { padding: 16px 18px 14px; }
+  .detail-header .htxt h2 { font-size: 18px; }
+  .gallery-main { padding: 16px 52px; }
+  .gallery-nav { width: 36px; height: 36px; font-size: 14px; }
+  .gallery-nav.gprev { left: 10px; }
+  .gallery-nav.gnext { right: 10px; }
+  .gallery-strip { height: 74px; padding: 10px 14px; gap: 8px; }
+  .gthumb { height: 52px; }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  #projects { padding: 0 16px; gap: 52px; }
   .pmeta .title-tc { font-size: 20px; }
-  .nav-side, .dots { display: none; }
-  .corner.tl { top: 16px; left: 16px; }
-  .corner.tr { top: 16px; right: 16px; font-size: 9px; }
-  #detail-modal { width: 96vw; height: 92vh; }
-  .gallery-strip { height: 80px; }
-  .gthumb { height: 54px; }
+  .pmeta .specs { grid-template-columns: max-content 1fr; gap: 6px 16px; }
+  .detail-header .htxt h2 { font-size: 16px; }
+  .gallery-main { padding: 12px 44px; }
 }
 </style>
 </head>
@@ -714,7 +784,11 @@ document.getElementById('total').textContent = String(N).padStart(2, '0');
 const projectEls = Array.from(wrap.children);
 const dotEls = Array.from(dotsEl.children);
 
+// Mobile uses natural scroll — desktop slide-nav is disabled there
+const isMobile = () => window.matchMedia('(max-width: 900px)').matches;
+
 function layout() {
+  if (isMobile()) return;  // mobile shows all projects in normal flow
   projectEls.forEach((el, i) => {
     el.classList.remove('is-current','is-prev','is-next','is-above','is-below');
     if (i === curIdx) el.classList.add('is-current');
@@ -728,6 +802,7 @@ function layout() {
 }
 
 function goTo(idx) {
+  if (isMobile()) return;
   curIdx = (idx + N) % N;
   layout();
 }
@@ -737,15 +812,17 @@ document.getElementById('next').addEventListener('click', () => goTo(curIdx + 1)
 
 window.addEventListener('keydown', (e) => {
   if (document.body.classList.contains('has-detail-active')) return;
+  if (isMobile()) return;
   if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); goTo(curIdx - 1); }
   else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); goTo(curIdx + 1); }
   else if (e.key === 'Home') { goTo(0); }
   else if (e.key === 'End') { goTo(N - 1); }
 });
 
-// Wheel navigation (debounced)
+// Wheel navigation (debounced) — desktop only
 let wheelTimer = null;
 window.addEventListener('wheel', (e) => {
+  if (isMobile()) return;
   if (document.body.classList.contains('has-detail-active')) return;
   if (wheelTimer) return;
   if (Math.abs(e.deltaY) < 12) return;
@@ -753,12 +830,14 @@ window.addEventListener('wheel', (e) => {
   wheelTimer = setTimeout(() => { wheelTimer = null; }, 600);
 }, { passive: true });
 
-// Click pcard image OR "View Detail" to open the gallery
+// Click pcard image OR "View Detail" to open the gallery.
+// On mobile every project is visible, so the is-current check is skipped.
 wrap.addEventListener('click', (e) => {
   const trigger = e.target.closest('.pcard, [data-open-detail]');
   if (!trigger) return;
   const projEl = trigger.closest('.project');
-  if (!projEl || !projEl.classList.contains('is-current')) return;
+  if (!projEl) return;
+  if (!isMobile() && !projEl.classList.contains('is-current')) return;
   const idx = parseInt(projEl.dataset.idx, 10);
   openDetail(idx);
 });
@@ -878,6 +957,24 @@ window.addEventListener('keydown', (e) => {
 
 // Initial layout
 layout();
+
+// Re-apply correct layout when crossing the mobile/desktop breakpoint
+// (e.g. tablet rotation, window resize). On returning to desktop, clear
+// mobile flow and re-center on the first project.
+let wasMobile = isMobile();
+window.addEventListener('resize', () => {
+  const nowMobile = isMobile();
+  if (nowMobile !== wasMobile) {
+    wasMobile = nowMobile;
+    if (nowMobile) {
+      // switching to mobile: strip desktop position classes
+      projectEls.forEach(el => el.classList.remove('is-current','is-prev','is-next','is-above','is-below'));
+    } else {
+      curIdx = 0;
+      layout();
+    }
+  }
+});
 </script>
 
 </body>
