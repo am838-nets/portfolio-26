@@ -100,13 +100,13 @@
        nav links highest, then contact (left) and clock (right) below,
        each on its own band so nothing overlaps. */
     .nav-categories{
-      gap:22px;
+      gap:18px;
       bottom:104px;
-      flex-wrap:wrap;
+      flex-wrap:nowrap;
       justify-content:center;
-      max-width:90vw;
+      white-space:nowrap;
     }
-    .nav-categories a{font-size:10px;letter-spacing:0.24em;}
+    .nav-categories a{font-size:9px;letter-spacing:0.16em;}
     .corner-bl{
       bottom:34px;left:0;right:0;
       text-align:center;
@@ -121,8 +121,8 @@
     }
   }
   @media (max-width:380px){
-    .nav-categories{gap:16px;bottom:100px;}
-    .nav-categories a{font-size:9px;letter-spacing:0.18em;}
+    .nav-categories{gap:12px;bottom:100px;}
+    .nav-categories a{font-size:8px;letter-spacing:0.1em;}
   }
 </style>
 </head>

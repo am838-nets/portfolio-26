@@ -316,20 +316,21 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   .info-title { font-size: 16px; margin-bottom: 4px; }
   .info-series { font-size: 9px; margin-bottom: 6px; }
   .info-meta { font-size: 10px; }
-  /* Bottom bands, clearly separated:
-     info (highest) -> series dots -> mobile hint (lowest) */
-  .info { bottom: 128px; width: 92%; }
-  .series-dots { bottom: 92px; }
+  /* Bottom bands, top to bottom, none overlapping:
+     info (150) > series dots (116) > mobile hint (84) > controls (32, 40px tall) */
+  .info { bottom: 150px; width: 92%; }
+  .series-dots { bottom: 116px; }
+  .hint-mobile { bottom: 84px; }
+  .controls { bottom: 32px; }
   .pond-wrap { width: 480px; height: 480px; }
   .tl .name-tc { font-size: 12px; }
   .hint { display: none; }
-  .hint-mobile { bottom: 62px; }
 }
 @media (max-width: 380px) {
-  .info { bottom: 118px; }
+  .info { bottom: 142px; }
   .info-title { font-size: 15px; }
-  .series-dots { bottom: 88px; }
-  .hint-mobile { bottom: 58px; font-size: 11px; }
+  .series-dots { bottom: 110px; }
+  .hint-mobile { bottom: 80px; font-size: 11px; }
 }
 
 /* Mobile persistent hint (replaces cursor tooltip which needs a mouse) */
@@ -339,7 +340,7 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   bottom: 26px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 80;
+  z-index: 90;
   font-family: var(--font-tc);
   font-size: 12px;
   letter-spacing: 0.08em;
@@ -560,6 +561,7 @@ body.has-3d-active #click-hint { display: none; }
 
 <script>
 const T = {
+  "otta": "creations/otta.png",
   "magic_duck": "creations/magic_duck.png",
   "magic_duck2": "creations/magic_duck2.png",
   "pumkin": "creations/pumkin.png",
@@ -573,7 +575,7 @@ const T = {
 };
 
 const items = [
-  { id:'01', name:'Otter — Aroma Stone', series:'zoo', client:'Taipei Zoo · 2025', img:null, glb:'creations/otta.glb' },
+  { id:'01', name:'Otter — Aroma Stone', series:'zoo', client:'Taipei Zoo · 2025', img:'otta', glb:'creations/otta.glb' },
   { id:'02', name:'UFO — Public Installation', series:'ufo', client:'Xizhi Stellar Park · 2024', img:'ufo', glb:'creations/ufo.glb' },
   { id:'03', name:'Magic Duck I — Sculpture', series:'duck', client:'Banqiao Duck Park · 2024', img:'magic_duck', glb:'creations/magic_duck.glb' },
   { id:'04', name:'Magic Duck II — Sculpture', series:'duck', client:'Banqiao Duck Park · 2024', img:'magic_duck2', glb:'creations/magic_duck2.glb' },
