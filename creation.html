@@ -313,12 +313,23 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
 
 @media (max-width: 768px) {
   .item { width: 200px; height: 200px; margin-left: -100px; margin-top: -100px; }
-  .info-title { font-size: 17px; }
-  .info { bottom: 14vh; }
+  .info-title { font-size: 16px; margin-bottom: 4px; }
+  .info-series { font-size: 9px; margin-bottom: 6px; }
+  .info-meta { font-size: 10px; }
+  /* Bottom bands, clearly separated:
+     info (highest) -> series dots -> mobile hint (lowest) */
+  .info { bottom: 128px; width: 92%; }
+  .series-dots { bottom: 92px; }
   .pond-wrap { width: 480px; height: 480px; }
   .tl .name-tc { font-size: 12px; }
   .hint { display: none; }
-  .series-dots { bottom: 90px; }
+  .hint-mobile { bottom: 62px; }
+}
+@media (max-width: 380px) {
+  .info { bottom: 118px; }
+  .info-title { font-size: 15px; }
+  .series-dots { bottom: 88px; }
+  .hint-mobile { bottom: 58px; font-size: 11px; }
 }
 
 /* Mobile persistent hint (replaces cursor tooltip which needs a mouse) */

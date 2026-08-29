@@ -94,12 +94,35 @@
   }
 
   @media (max-width:768px){
-    .corner-tl{top:32px;left:32px;}
-    .corner-tr{top:32px;right:32px;}
-    .corner-bl{bottom:48px;left:32px;}
-    .corner-br{bottom:48px;right:32px;}
-    .nav-categories{gap:30px;bottom:54px;}
-    .nav-categories a{font-size:9px;letter-spacing:0.28em;}
+    .corner-tl{top:24px;left:24px;}
+    .corner-tr{top:24px;right:24px;}
+    /* Stack the bottom elements with clear vertical separation:
+       nav links highest, then contact (left) and clock (right) below,
+       each on its own band so nothing overlaps. */
+    .nav-categories{
+      gap:22px;
+      bottom:104px;
+      flex-wrap:wrap;
+      justify-content:center;
+      max-width:90vw;
+    }
+    .nav-categories a{font-size:10px;letter-spacing:0.24em;}
+    .corner-bl{
+      bottom:34px;left:0;right:0;
+      text-align:center;
+      font-size:9px;letter-spacing:0.12em;
+      line-height:2;
+    }
+    .corner-br{
+      bottom:70px;right:auto;left:50%;
+      transform:translateX(-50%);
+      flex-direction:row;
+      gap:10px;
+    }
+  }
+  @media (max-width:380px){
+    .nav-categories{gap:16px;bottom:100px;}
+    .nav-categories a{font-size:9px;letter-spacing:0.18em;}
   }
 </style>
 </head>
