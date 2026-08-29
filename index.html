@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>鄭乃慈 Nai Tzu Cheng — Portfolio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -94,8 +94,8 @@
   }
 
   @media (max-width:768px){
-    .corner-tl{top:24px;left:24px;}
-    .corner-tr{top:24px;right:24px;}
+    .corner-tl{top:max(40px, calc(env(safe-area-inset-top) + 28px));left:24px;}
+    .corner-tr{top:max(40px, calc(env(safe-area-inset-top) + 28px));right:24px;}
     /* Stack the bottom elements with clear vertical separation:
        nav links highest, then contact (left) and clock (right) below,
        each on its own band so nothing overlaps. */
