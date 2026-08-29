@@ -754,7 +754,13 @@ setTimeout(() => {
 
 /* ============ POND SHADER ============ */
 const cv = document.getElementById('pondCanvas');
-const gl = cv.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: false });
+const gl = cv.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: false })
+        || cv.getContext('experimental-webgl', { antialias: true, alpha: true, premultipliedAlpha: false });
+if (!gl) {
+  // Instagram in-app browser etc. — skip the water pond, hide its canvas.
+  cv.style.display = 'none';
+  console.warn('Pond WebGL unavailable — skipped.');
+} else {
 const dpr = Math.min(window.devicePixelRatio || 1, 2);
 let pondColor = seriesMap.duck.pond;
 
@@ -853,6 +859,7 @@ if (gl) {
     requestAnimationFrame(frame);
   }
   frame();
+}
 }
 </script>
 

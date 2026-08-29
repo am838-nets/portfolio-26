@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Photography — Nai Tzu Cheng</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -206,9 +206,10 @@
     transition: transform 0.9s cubic-bezier(0.23, 1, 0.32, 1),
                 opacity 0.9s cubic-bezier(0.23, 1, 0.32, 1),
                 filter 0.9s ease;
-    will-change: transform, opacity;
     overflow: hidden;
   }
+  /* will-change only on the few visible cards, added via JS */
+  .photo.near { will-change: transform, opacity; }
 
   .photo img {
     width: 100%;
@@ -265,6 +266,22 @@
 </div>
 
 <script>
+// Prevent pinch-zoom crashes on iOS (Safari ignores user-scalable=no for gestures)
+document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+// Block double-tap zoom
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+// Block multi-touch (pinch)
+document.addEventListener('touchmove', (e) => {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
 // 59 張底片清單(精彩重曝光在前,輕微洗牌)
 const photos = [
   './photos/51.jpg',
@@ -392,7 +409,7 @@ const photoElements = [];
 photos.forEach((src, idx) => {
   const photo = document.createElement('div');
   photo.className = 'photo';
-  photo.innerHTML = '<img src="' + src + '" alt="Frame ' + (idx + 1) + '" loading="' + (idx < 3 ? 'eager' : 'lazy') + '">';
+  photo.innerHTML = '<img src="' + src + '" alt="Frame ' + (idx + 1) + '" decoding="async" loading="' + (idx < 3 ? 'eager' : 'lazy') + '">';
   stack.appendChild(photo);
   photoElements.push(photo);
 });
@@ -406,6 +423,7 @@ function updateStack() {
 
     if (offset < 0) {
       // 已被拿走的:藏在左上
+      el.classList.remove('near');
       el.style.transform = 'translate(-70vw, -55vh) rotate(-15deg)';
       el.style.opacity = '0';
       el.style.zIndex = '0';
@@ -415,6 +433,7 @@ function updateStack() {
 
     if (offset >= STACK_VISIBLE) {
       // 後面太遠的:藏起來
+      el.classList.remove('near');
       el.style.transform = 'translate(0, 0) scale(0.92)';
       el.style.opacity = '0';
       el.style.zIndex = '1';
@@ -429,6 +448,7 @@ function updateStack() {
     const opacity = 1 - (depth * 0.15);         // 後面變淡
     const brightness = 1 - (depth * 0.18);      // 後面變暗
 
+    el.classList.add('near');   // visible card gets GPU hint
     el.style.transform =
       'translate(0, ' + yPush + 'px) scale(' + scale + ')';
     el.style.opacity = String(opacity);

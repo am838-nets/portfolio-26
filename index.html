@@ -169,8 +169,15 @@
    ============================================================ */
 
 const cv = document.getElementById('scene');
-const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false });
-if(!gl){ alert('WebGL not supported'); throw new Error('No WebGL'); }
+const gl = cv.getContext('webgl', { antialias: true, premultipliedAlpha: false, alpha: false })
+        || cv.getContext('experimental-webgl', { antialias: true, premultipliedAlpha: false, alpha: false });
+if(!gl){
+  // Graceful degrade (e.g. Instagram in-app browser with weak WebGL):
+  // hide the canvas, keep a dark background, and stop this script cleanly.
+  cv.style.display = 'none';
+  document.body.style.background = '#050505';
+  console.warn('WebGL unavailable — static background shown.');
+} else {
 
 let W = 0, H = 0;
 const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -920,6 +927,7 @@ function frame(){
 }
 
 requestAnimationFrame(frame);
+}
 </script>
 </body>
 </html>
