@@ -236,7 +236,7 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
 /* ============ CONTROLS ============ */
 .controls {
   position: fixed;
-  bottom: 32px;
+  bottom: 48px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 80;
@@ -317,20 +317,21 @@ html, body { height: 100%; width: 100%; background: #050505; color: var(--ink); 
   .info-series { font-size: 9px; margin-bottom: 6px; }
   .info-meta { font-size: 10px; }
   /* Bottom bands, top to bottom, none overlapping:
-     info (150) > series dots (116) > mobile hint (84) > controls (32, 40px tall) */
-  .info { bottom: 150px; width: 92%; }
-  .series-dots { bottom: 116px; }
-  .hint-mobile { bottom: 84px; }
-  .controls { bottom: 32px; }
+     info (168) > series dots (134) > mobile hint (102) > controls (52, 40px tall) */
+  .info { bottom: 168px; width: 92%; }
+  .series-dots { bottom: 134px; }
+  .hint-mobile { bottom: 102px; }
+  .controls { bottom: 52px; }
   .pond-wrap { width: 480px; height: 480px; }
   .tl .name-tc { font-size: 12px; }
   .hint { display: none; }
 }
 @media (max-width: 380px) {
-  .info { bottom: 142px; }
+  .info { bottom: 160px; }
   .info-title { font-size: 15px; }
-  .series-dots { bottom: 110px; }
-  .hint-mobile { bottom: 80px; font-size: 11px; }
+  .series-dots { bottom: 128px; }
+  .hint-mobile { bottom: 98px; font-size: 11px; }
+  .controls { bottom: 48px; }
 }
 
 /* Mobile persistent hint (replaces cursor tooltip which needs a mouse) */
